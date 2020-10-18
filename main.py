@@ -135,7 +135,7 @@ def read_dir(dir):
             if re.search('\.(c|h)$', file):
                 check_file(dir + "/" + file)
             elif re.search('\.(o|sh|a|so|d|gcda|gcno|out|swp|elf|obj)$', file):
-                show_error(file, "O1", 0)
+                show_error(dir + "/" + file, "O1", 0)
 
         elif not (file == "tests" and os.path.exists(dir + "/.git")):
             read_dir(dir + "/" + file)
