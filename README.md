@@ -3,6 +3,7 @@
 ## How to use
 
  - Clone the repo
- - `python main.py <folder>`
+ - `sudo ./install.sh`
+ - `cnormitek [folder]`
  - ...
  - Enjoy!

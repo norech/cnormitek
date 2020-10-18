@@ -11,8 +11,7 @@ class color:
     NORMAL  = '\033[0m'
 
 def usage():
-    print("Please use it as shown below :")
-    print("    ./cnormitek [folder]\n")
+    print("Please use it as shown : cnormitek [folder]\n")
     print("If you think this is an error please open an issue !")
     exit()
 
