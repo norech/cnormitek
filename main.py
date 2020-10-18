@@ -36,7 +36,8 @@ errors = {
         "L2": ("bad indentation", "minor"),
         "L3": ("misplaced or missing space", "minor"),
 
-        "implicit_L001": ("trailing space", "info")
+        "implicit_L001": ("trailing space", "info"),
+        "INF": ("suspicious system call found", "info")
         }
 
 def check_file(file):
@@ -79,6 +80,7 @@ def check_lines(file):
     line_nb = 0
     empty_lines_count = 0
     has_include_guard = False
+
     for line in fi:
         line_nb += 1
 
@@ -89,6 +91,10 @@ def check_lines(file):
         # match ifndef or other if
         if re.search('^\s*\#if', line):
             has_include_guard = True
+
+        # check for forbidden system_call
+        if re.search('(^|[^0-9a-zA-Z_])(printf|dprintf|fprintf|vprintf|sprintf|snprintf|vprintf|vfprintf|vsprintf|vsnprintf|asprintf|scranf|memcpy|memset|memmove|strcat|strchar|strcpy|atoi|strlen|strstr|strncat|strncpy|strcasestr|strncasestr|strcmp|strncmp|strtok|strnlen|strdup|realloc)[^0-9a-zA-Z]', line):
+            show_error(file, "INF", line_nb)
 
         # columns length
         if len(line.replace("\t", "    ")) > 80:
