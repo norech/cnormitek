@@ -26,18 +26,18 @@ header_regex = (
         )
 
 errors = {
-        "F3": (color.MAJOR, "too many columns", "major"),
-        "G1": (color.MAJOR, "bad or missing header", "major"),
-        "O1": (color.MAJOR, "Your delivery folder should not contain unncessary files", "major"),
+        "F3": ("too many columns", "major"),
+        "G1": ("bad or missing header", "major"),
+        "O1": ("Your delivery folder should not contain unncessary files", "major"),
 
-        "C1": (color.MINOR, "probably too many conditions nested", "minor"),
-        "C3": (color.MINOR, "goto is discouraged", "minor"),
-        "G2": (color.MINOR, "probably too many empty lines", "minor"),
-        "H2": (color.MINOR, "no inclusion guard found", "minor"),
-        "L2": (color.MINOR, "bad indentation", "minor"),
-        "L3": (color.MINOR, "misplaced or missing space", "minor"),
+        "C1": ("probably too many conditions nested", "minor"),
+        "C3": ("goto is discouraged", "minor"),
+        "G2": ("probably too many empty lines", "minor"),
+        "H2": ("no inclusion guard found", "minor"),
+        "L2": ("bad indentation", "minor"),
+        "L3": ("misplaced or missing space", "minor"),
 
-        "implicit_L001": (color.INFO, "trailing space", "info")
+        "implicit_L001": ("trailing space", "info")
         }
 
 def check_file(file):
@@ -50,13 +50,23 @@ def check_file(file):
     check_G1(file, content)
     check_lines(file)
 
+
+def get_error_color(error_type):
+    if error_type == "major":
+        return color.MAJOR
+    elif error_type == "minor":
+        return color.MINOR
+    elif error_type == "info":
+        return color.INFO
+    return color.NORMAL
+
 def show_error(file, code, line = None):
     if line is None:
         line = "?"
 
     error = errors[code]
 
-    print(file + ":" + str(line) + "::" + code + " - " + error[0] + error[1] + " (" + error[2] + ")" + color.NORMAL)
+    print(file + ":" + str(line) + "::" + code + " - " + get_error_color(error[1]) + error[0] + " (" + error[1] + ")" + color.NORMAL)
 
 def check_G1(file, content):
     matches = re.search(header_regex, content)
