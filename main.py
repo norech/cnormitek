@@ -24,6 +24,13 @@ header_regex = (
         r"\*\/"
         )
 
+forbidden_syscall_regex = (
+        r'(^|[^0-9a-zA-Z_])(printf|dprintf|fprintf|vprintf|sprintf|snprintf'
+        r'|vprintf|vfprintf|vsprintf|vsnprintf|asprintf|scranf|memcpy|memset'
+        r'|memmove|strcat|strchar|strcpy|atoi|strlen|strstr|strncat|strncpy'
+        r'|strcasestr|strncasestr|strcmp|strncmp|strtok|strnlen|strdup|realloc'
+        r')[^0-9a-zA-Z_]'
+        )
 
 function_impl_regex = r"[^\(\)\n]+\([^\n]*\)((?:\n|\r|\s)*){(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
 
@@ -62,7 +69,7 @@ def check_file(file):
         content += line
     fi.close()
 
-    check_G1(file, content)
+    check_header_comment(file, content)
     check_function_declarations(file, content)
     check_lines(file)
 
@@ -81,7 +88,9 @@ def show_error(file, code, line = None):
 
     error = errors[code]
 
-    print(file + ":" + str(line) + "::" + code + " - " + get_error_color(error[1]) + error[0] + " (" + error[1] + ")" + color.NORMAL)
+    print(file + ":" + str(line) + "::" + code + " - "
+        + get_error_color(error[1])  + error[0] + " (" + error[1] + ")"
+        + color.NORMAL)
 
 def check_function_declarations(file, content):
     matches = re.finditer(function_impl_regex, content, re.MULTILINE)
@@ -96,7 +105,7 @@ def check_function_declarations(file, content):
         if not "\n" in match.group(1):
             show_error(file, "L3", line_nb_start)
 
-def check_G1(file, content):
+def check_header_comment(file, content):
     matches = re.search(header_regex, content)
 
     if not matches:
@@ -121,7 +130,7 @@ def check_lines(file):
             has_include_guard = True
 
         # check for forbidden system_call
-        if re.search('(^|[^0-9a-zA-Z_])(printf|dprintf|fprintf|vprintf|sprintf|snprintf|vprintf|vfprintf|vsprintf|vsnprintf|asprintf|scranf|memcpy|memset|memmove|strcat|strchar|strcpy|atoi|strlen|strstr|strncat|strncpy|strcasestr|strncasestr|strcmp|strncmp|strtok|strnlen|strdup|realloc)[^0-9a-zA-Z]', line):
+        if re.search(forbidden_syscall_regex, line):
             show_error(file, "INF", line_nb)
 
         # columns length
