@@ -24,14 +24,17 @@ header_regex = (
         r"\*\/"
         )
 
+
+function_impl_regex = r"[^\(\)\n]+\([^\n]*\)((?:\n|\r|\s)*){(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
+
 errors = {
         "F3": ("too many columns", "major"),
+        "F4": ("too long function", "major"),
         "G1": ("bad or missing header", "major"),
         "O1": ("Your delivery folder should not contain unncessary files", "major"),
 
         "C1": ("probably too many conditions nested", "minor"),
         "C3": ("goto is discouraged", "minor"),
-        "G2": ("probably too many empty lines", "minor"),
         "H2": ("no inclusion guard found", "minor"),
         "L2": ("bad indentation", "minor"),
         "L3": ("misplaced or missing space", "minor"),
@@ -39,6 +42,18 @@ errors = {
         "implicit_L001": ("trailing space", "info"),
         "INF": ("suspicious system call found", "info")
         }
+
+def get_line_pos(string, pos):
+    line = 1
+    if pos > len(string):
+        raise IndexError("pos")
+    for i in range(0, pos):
+        char = string[i]
+        if char == "\r":
+            continue
+        if char == "\n":
+            line += 1
+    return line
 
 def check_file(file):
     content = ""
@@ -48,8 +63,8 @@ def check_file(file):
     fi.close()
 
     check_G1(file, content)
+    check_function_declarations(file, content)
     check_lines(file)
-
 
 def get_error_color(error_type):
     if error_type == "major":
@@ -67,6 +82,19 @@ def show_error(file, code, line = None):
     error = errors[code]
 
     print(file + ":" + str(line) + "::" + code + " - " + get_error_color(error[1]) + error[0] + " (" + error[1] + ")" + color.NORMAL)
+
+def check_function_declarations(file, content):
+    matches = re.finditer(function_impl_regex, content, re.MULTILINE)
+
+    for matchNum, match in enumerate(matches, start=1):
+        whole_match = match.group()
+        line_nb_start = get_line_pos(content, match.start())
+        line_nb_end = get_line_pos(content, match.end())
+        if line_nb_end - line_nb_start >= 23:
+            show_error(file, "F4", line_nb_start)
+        # if no newline present between function ")" and "{"
+        if not "\n" in match.group(1):
+            show_error(file, "L3", line_nb_start)
 
 def check_G1(file, content):
     matches = re.search(header_regex, content)
