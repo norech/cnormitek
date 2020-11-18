@@ -115,8 +115,8 @@ def check_lines(file):
     fi = fileinput.input(file)
 
     line_nb = 0
-    empty_lines_count = 0
     has_include_guard = False
+    was_statement = False
 
     for line in fi:
         line_nb += 1
@@ -156,25 +156,15 @@ def check_lines(file):
             show_error(file, "L3", line_nb)
 
         # in while/for/if/...
-        if re.search('^\s+\{', line):
+        if was_statement and re.search('^\s+\{', line):
             show_error(file, "L3", line_nb)
-
-        # in functions
-        if re.search('^(?!\s).+\s*\{\s*$', line):
-            show_error(file, "L3", line_nb)
+        was_statement = False
+        if re.search('^(\t|    )(while|for|if)', line):
+            was_statement = True
 
         # trailing spaces
         if re.search('\s+\n$', line):
             show_error(file, "implicit_L001", line_nb)
-
-        # empty line
-        if re.search('^\s+$', line):
-            empty_lines_count += 1
-        else:
-            empty_lines_count = 0
-
-        if empty_lines_count >= 2:
-            show_error(file, "G2", line_nb)
 
     if file.endswith(".h") and not has_include_guard:
         show_error(file, "H2")
