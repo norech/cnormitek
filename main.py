@@ -134,7 +134,7 @@ def check_lines(file):
             show_error(file, "INF", line_nb)
 
         # columns length
-        if len(line.replace("\t", "    ")) > 80:
+        if len(line.replace("\t", "    ")) > 81: # 80 characters + \n
             show_error(file, "F3", line_nb)
 
         # tabs
