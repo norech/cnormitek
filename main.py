@@ -15,6 +15,9 @@ def usage():
     print("If you think this is an error please open an issue !")
     exit()
 
+
+blacklist = []
+
 header_regex = (
         r"\/\*\n"
         r"\*\* EPITECH PROJECT, [0-9]{4}\n"
@@ -85,6 +88,9 @@ def get_error_color(error_type):
 def show_error(file, code, line = None):
     if line is None:
         line = "?"
+
+    if code in blacklist:
+        return
 
     error = errors[code]
 
@@ -182,12 +188,27 @@ def read_dir(dir):
         elif not (file == "tests" and os.path.exists(dir + "/.git")):
             read_dir(dir + "/" + file)
 
-argdir = sys.argv
+def read_args():
+    args = sys.argv
+    path = None
 
-if not len(sys.argv) > 1:
-    usage()
+    if not len(args) > 1:
+        usage()
 
-if os.path.isfile(argdir[1]):
-    check_file(argdir[1])
+    for i in range(1, len(args)):
+        if args[i].startswith('--no-'):
+            blacklist.append(args[i][5:])
+            continue
+        if path is not None:
+            usage()
+        path = args[i]
+
+    if path is None:
+        usage()
+    return path
+
+path = read_args()
+if os.path.isfile(path):
+    check_file(path)
 else:
-    read_dir(argdir[1])
+    read_dir(path)
