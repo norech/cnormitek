@@ -11,8 +11,12 @@ class color:
     NORMAL  = '\033[0m'
 
 def usage():
-    print("Please use it as shown : cnormitek [folder]\n")
-    print("If you think this is an error please open an issue !")
+    print("Please use it as shown : cnormitek [folder] [--no-CODE]\n")
+    print("If you think this is an error please open an issue!")
+    print()
+    print("Flags:")
+    for error in errors:
+        print("  --no-" + error + ": ignore " + error + " (" + errors[error][0] + ")")
     exit()
 
 
@@ -41,7 +45,7 @@ errors = {
         "F3": ("too many columns", "major"),
         "F4": ("too long function", "major"),
         "G1": ("bad or missing header", "major"),
-        "O1": ("Your delivery folder should not contain unncessary files", "major"),
+        "O1": ("delivery folder should not contain unnecessary files", "major"),
 
         "C1": ("probably too many conditions nested", "minor"),
         "C3": ("goto is discouraged", "minor"),
@@ -196,6 +200,8 @@ def read_args():
         usage()
 
     for i in range(1, len(args)):
+        if args[i] == "--help":
+            usage()
         if args[i].startswith('--no-'):
             blacklist.append(args[i][5:])
             continue
@@ -204,7 +210,7 @@ def read_args():
         path = args[i]
 
     if path is None:
-        usage()
+        path = os.getcwd()
     return path
 
 path = read_args()
