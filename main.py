@@ -10,6 +10,9 @@ class color:
     INFO    = '\033[94m'
     NORMAL  = '\033[0m'
 
+blacklist = []
+allowed_syscalls = [ "malloc", "free", "write" ]
+
 def usage():
     print("Please use it as shown : cnormitek [folder] [--no-CODE]\n")
     print("If you think this is an error please open an issue!")
@@ -18,9 +21,6 @@ def usage():
     for error in errors:
         print("  --no-" + error + ": ignore " + error + " (" + errors[error][0] + ")")
     exit()
-
-
-blacklist = []
 
 header_regex = (
         r"\/\*\n"
@@ -32,10 +32,11 @@ header_regex = (
         )
 
 forbidden_syscall_regex = (
-        r'(^|[^0-9a-zA-Z_])(printf|dprintf|fprintf|vprintf|sprintf|snprintf'
+        r'(?:^|[^0-9a-zA-Z_])(printf|dprintf|fprintf|vprintf|sprintf|snprintf'
         r'|vprintf|vfprintf|vsprintf|vsnprintf|asprintf|scranf|memcpy|memset'
         r'|memmove|strcat|strchar|strcpy|atoi|strlen|strstr|strncat|strncpy'
         r'|strcasestr|strncasestr|strcmp|strncmp|strtok|strnlen|strdup|realloc'
+        r'|write|free|malloc'
         r')[^0-9a-zA-Z_]'
         )
 
@@ -148,8 +149,10 @@ def check_lines(file):
             has_include_guard = True
 
         # check for forbidden system_call
-        if re.search(forbidden_syscall_regex, line):
-            show_error(file, "syscall", line_nb)
+        syscalls = re.finditer(forbidden_syscall_regex, line)
+        for matchNum, match in enumerate(syscalls, start=1):
+            if not match.group(1) in allowed_syscalls:
+                show_error(file, "syscall", line_nb)
 
         # columns length
         if len(line.replace("\t", "    ")) > 81: # 80 characters + \n
@@ -204,6 +207,8 @@ def read_dir(dir):
             read_dir(dir + "/" + file)
 
 def read_args():
+    global blacklist
+    global allowed_syscalls
     args = sys.argv
     path = None
 
@@ -215,6 +220,9 @@ def read_args():
             usage()
         if args[i].startswith('--no-'):
             blacklist.append(args[i][5:])
+            continue
+        if args[i].startswith("--allowed="):
+            allowed_syscalls = args[i][10:].split(",")
             continue
         if path is not None:
             usage()
