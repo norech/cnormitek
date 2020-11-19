@@ -25,6 +25,7 @@ def usage():
     print("\t\tIf omitted, defaults to: " + ",".join(allowed_syscalls))
     print()
     print("FLAGS")
+    print("\t--no-gitignore\t\tdo not read .gitignore files")
     for error in errors:
         spacing = "\t" * (1 + (len(error) < 10))
         print("\t--no-" + error + " " + spacing +
@@ -130,6 +131,9 @@ def glob_match(s1, s2):
         return False
 
 def get_ignored_files(gitignore_path):
+    if "gitignore" in blacklist:
+        return []
+
     fi = fileinput.input(gitignore_path)
     start = os.path.dirname(gitignore_path)
     ignored_files = []
