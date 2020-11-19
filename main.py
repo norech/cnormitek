@@ -14,12 +14,18 @@ blacklist = []
 allowed_syscalls = [ "malloc", "free", "write" ]
 
 def usage():
-    print("Please use it as shown : cnormitek [folder] [--no-CODE]\n")
+    print("Please use it as shown : cnormitek [folder] [--allowed=malloc,free,...] [--no-CODE]\n")
     print("If you think this is an error please open an issue!")
     print()
-    print("Flags:")
+    print("OPTIONS")
+    print("\t--allowed=<functions>")
+    print("\t\tA comma-separated list of allowed system calls")
+    print("\t\tIf omitted, defaults to: " + ",".join(allowed_syscalls))
+    print()
+    print("FLAGS")
     for error in errors:
-        print("  --no-" + error + ": ignore " + error + " (" + errors[error][0] + ")")
+        spacing = "\t" * (1 + (len(error) < 10))
+        print("\t--no-" + error + " " + spacing + "ignore " + error + " (" + errors[error][0] + ")")
     exit()
 
 header_regex = (
