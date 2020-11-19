@@ -57,7 +57,7 @@ errors = {
         "L3": ("misplaced or missing space", "minor"),
 
         "implicit_L001": ("trailing space", "info"),
-        "INF": ("suspicious system call found", "info")
+        "syscall": ("suspicious system call found", "info"),
         }
 
 def get_line_pos(string, pos):
@@ -149,7 +149,7 @@ def check_lines(file):
 
         # check for forbidden system_call
         if re.search(forbidden_syscall_regex, line):
-            show_error(file, "INF", line_nb)
+            show_error(file, "syscall", line_nb)
 
         # columns length
         if len(line.replace("\t", "    ")) > 81: # 80 characters + \n
