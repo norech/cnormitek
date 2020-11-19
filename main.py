@@ -46,6 +46,7 @@ errors = {
         "F4": ("too long function", "major"),
         "G1": ("bad or missing header", "major"),
         "O1": ("delivery folder should not contain unnecessary files", "major"),
+        "O3": ("too many functions in file", "major"), 
 
         "C1": ("probably too many conditions nested", "minor"),
         "C3": ("goto is discouraged", "minor"),
@@ -104,7 +105,7 @@ def show_error(file, code, line = None):
 
 def check_function_declarations(file, content):
     matches = re.finditer(function_impl_regex, content, re.MULTILINE)
-
+    func_count = 0
     for matchNum, match in enumerate(matches, start=1):
         whole_match = match.group()
         line_nb_start = get_line_pos(content, match.start())
@@ -114,6 +115,9 @@ def check_function_declarations(file, content):
         # if no newline present between function ")" and "{"
         if not "\n" in match.group(1):
             show_error(file, "L3", line_nb_start)
+        func_count += 1
+    if func_count > 5:
+        show_error(file, "O3")
 
 def check_header_comment(file, content):
     matches = re.search(header_regex, content)
