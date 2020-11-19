@@ -14,7 +14,9 @@ blacklist = []
 allowed_syscalls = [ "malloc", "free", "write" ]
 
 def usage():
-    print("Please use it as shown : cnormitek [folder] [--allowed=malloc,free,...] [--no-CODE]\n")
+    print(
+        "Please use it as shown : cnormitek [folder] "
+        "[--allowed=malloc,free,...] [--no-CODE]\n")
     print("If you think this is an error please open an issue!")
     print()
     print("OPTIONS")
@@ -25,10 +27,12 @@ def usage():
     print("FLAGS")
     for error in errors:
         spacing = "\t" * (1 + (len(error) < 10))
-        print("\t--no-" + error + " " + spacing + "ignore " + error + " (" + errors[error][0] + ")")
+        print("\t--no-" + error + " " + spacing +
+            "ignore " + error + " (" + errors[error][0] + ")")
     exit()
 
 header_regex = (
+        r"^"
         r"\/\*\n"
         r"\*\* EPITECH PROJECT, [0-9]{4}\n"
         r"\*\* (.*)\n"
@@ -59,12 +63,16 @@ forbidden_syscall_regex = (
         r')[^0-9a-zA-Z_]'
         )
 
-function_impl_regex = r"(?:[^\(\)\n]+ |)([^\(\)\n ]+)\([^\n]*\)((?:\n|\r|\s)*){(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
+function_impl_regex = (
+        r"(?:[^\(\)\n]+ |)([^\(\)\n ]+)\(([^\n]*)\)((?:\n|\r|\s)*)"
+        r"{(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
+        )
 
 errors = {
         "F2": ("function name should be in snake_case", "major"),
         "F3": ("too many columns", "major"),
         "F4": ("too long function", "major"),
+        "F5": ("too many arguments or missing void", "major"),
         "G1": ("bad or missing header", "major"),
         "O1": ("delivery folder should not contain unnecessary files", "major"),
         "O3": ("too many functions in file", "major"), 
@@ -134,10 +142,16 @@ def check_function_declarations(file, content):
         line_nb_end = get_line_pos(content, match.end())
         if line_nb_end - line_nb_start >= 23:
             show_error(file, "F4", line_nb_start)
+
         if not re.match("^[a-z][a-z_0-9]*$", match.group(1)):
             show_error(file, "F2", line_nb_start)
+
+        args_str = match.group(2)
+        if args_str.count(",") > 3 or args_str.replace(" ", "") == "":
+            show_error(file, "F5", line_nb_start)
+
         # if no newline present between function ")" and "{"
-        if not "\n" in match.group(2):
+        if not "\n" in match.group(3):
             show_error(file, "L3", line_nb_start)
         func_count += 1
     if func_count > 5:
@@ -160,7 +174,8 @@ def check_lines(file):
         line_nb += 1
 
         # don't match headers
-        if line.startswith("/*") or line.startswith("**") or line.startswith("*/"):
+        if line.startswith("/*") or line.startswith("**") \
+        or line.startswith("*/"):
             continue
 
         # match ifndef or other if
@@ -213,7 +228,8 @@ def check_lines(file):
 
 def read_dir(dir):
     for file in os.listdir(dir):
-        if not file.startswith(".") and not re.match("^[a-z][a-z_0-9]*($|\.)", file):
+        if not file.startswith(".") \
+        and not re.match("^[a-z][a-z_0-9]*($|\.)", file):
             show_error(file, "O4")
 
         if os.path.isfile(dir + "/" + file):
