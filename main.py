@@ -39,9 +39,10 @@ forbidden_syscall_regex = (
         r')[^0-9a-zA-Z_]'
         )
 
-function_impl_regex = r"[^\(\)\n]+\([^\n]*\)((?:\n|\r|\s)*){(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
+function_impl_regex = r"(?:[^\(\)\n]+ |)([^\(\)\n ]+)\([^\n]*\)((?:\n|\r|\s)*){(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
 
 errors = {
+        "F2": ("function name should be in snake_case", "major"),
         "F3": ("too many columns", "major"),
         "F4": ("too long function", "major"),
         "G1": ("bad or missing header", "major"),
@@ -112,8 +113,10 @@ def check_function_declarations(file, content):
         line_nb_end = get_line_pos(content, match.end())
         if line_nb_end - line_nb_start >= 23:
             show_error(file, "F4", line_nb_start)
+        if not re.match("^[a-z][a-z_0-9]*$", match.group(1)):
+            show_error(file, "F2", line_nb_start)
         # if no newline present between function ")" and "{"
-        if not "\n" in match.group(1):
+        if not "\n" in match.group(2):
             show_error(file, "L3", line_nb_start)
         func_count += 1
     if func_count > 5:
@@ -191,7 +194,7 @@ def read_dir(dir):
             if re.search('\.(c|h)$', file):
                 check_file(dir + "/" + file)
             elif re.search('\.(o|sh|a|so|d|gcda|gcno|out|swp|elf|obj)$', file):
-                show_error(dir + "/" + file, "O1", 0)
+                show_error(dir + "/" + file, "O1")
 
         elif not (file == "tests" and os.path.exists(dir + "/.git")):
             read_dir(dir + "/" + file)
