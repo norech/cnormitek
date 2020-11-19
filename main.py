@@ -112,23 +112,9 @@ def get_line_pos(string, pos):
     return line
 
 def glob_match(s1, s2):
-    if len(s1) == 0:
-        s1 = "\0"
-    if len(s2) == 0:
-        s2 = "\0"
-    s1_next = s1[1:]
-    s2_next = s2[1:]
-    if s1[0] == "\0" and s2[0] == "\0":
-        return True
-    elif s1[0] == s2[0]:
-        return glob_match(s1_next, s2_next)
-    elif s2[0] == '*':
-        if s1[0] != "\0":
-            return glob_match(s1_next, s2) or glob_match(s1, s2_next)
-        else:
-            return glob_match(s1, s2_next)
-    else:
-        return False
+    escaped = re.escape(s2)
+    pattern = escaped.replace("\\*\\*", "(.*)").replace("\\*", "([^/]+)")
+    return re.search("^" + pattern + "$", s1) is not None
 
 def get_ignored_files(gitignore_path):
     if "gitignore" in blacklist:
@@ -141,14 +127,20 @@ def get_ignored_files(gitignore_path):
     for line in fi:
         parts = line.replace("\n", "").replace("\r", "").split("#")
         if parts[0].replace(" ", "") != "":
-            ignored_files.append( os.path.relpath(parts[0], start=start))
+            if not "/" in parts[0]:
+                ignored_files.append(parts[0])
+            else:
+                abspath = os.path.abspath(start + "/" + parts[0])
+                ignored_files.append(abspath)
 
     fi.close()
     return ignored_files
 
 def is_file_ignored(file, ignored_files):
+    basename = os.path.basename(file)
+    file = os.path.abspath(file)
     for ignored_file in ignored_files:
-        if glob_match(file, ignored_file):
+        if glob_match(file, ignored_file) or glob_match(basename, ignored_file):
             return True
     return False
 
