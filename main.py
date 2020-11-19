@@ -48,6 +48,7 @@ errors = {
         "G1": ("bad or missing header", "major"),
         "O1": ("delivery folder should not contain unnecessary files", "major"),
         "O3": ("too many functions in file", "major"), 
+        "O4": ("file or folder should be named in snake_case", "major"), 
 
         "C1": ("probably too many conditions nested", "minor"),
         "C3": ("goto is discouraged", "minor"),
@@ -190,6 +191,9 @@ def check_lines(file):
 
 def read_dir(dir):
     for file in os.listdir(dir):
+        if not file.startswith(".") and not re.match("^[a-z][a-z_0-9]*($|\.)", file):
+            show_error(file, "O4")
+
         if os.path.isfile(dir + "/" + file):
             if re.search('\.(c|h)$', file):
                 check_file(dir + "/" + file)
