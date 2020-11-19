@@ -63,9 +63,18 @@ forbidden_syscall_regex = (
         r')[^0-9a-zA-Z_]'
         )
 
+unnecessary_files_regex = (
+        r'('
+        r'^vgcore\.'
+        r'|\.(o|sh|a|so|d|gcda|gcno|out|swp|elf|obj)$'
+        r'|^\#(.*)\#$'
+        r'|~$'
+        r')'
+        )
+
 function_impl_regex = (
-        r"(?:[^\(\)\n]+ |)([^\(\)\n ]+)\(([^\n]*)\)((?:\n|\r|\s)*)"
-        r"{(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
+        r"(?:\n|^)(?:[^\(\)\n\s\*][^\(\)\n\*]+|)(\*+[ ]*| )([^\(\)\n ]+)"
+        r"\(([^\n]*)\)((?:\n|\r|\s)*){(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
         )
 
 errors = {
@@ -83,6 +92,7 @@ errors = {
         "H2": ("no inclusion guard found", "minor"),
         "L2": ("bad indentation", "minor"),
         "L3": ("misplaced or missing space", "minor"),
+        "V3": ("pointer symbol is not attached to the name", "minor"),
 
         "implicit_L001": ("trailing space", "info"),
         "syscall": ("suspicious system call found", "info"),
@@ -99,6 +109,44 @@ def get_line_pos(string, pos):
         if char == "\n":
             line += 1
     return line
+
+def glob_match(s1, s2):
+    if len(s1) == 0:
+        s1 = "\0"
+    if len(s2) == 0:
+        s2 = "\0"
+    s1_next = s1[1:]
+    s2_next = s2[1:]
+    if s1[0] == "\0" and s2[0] == "\0":
+        return True
+    elif s1[0] == s2[0]:
+        return glob_match(s1_next, s2_next)
+    elif s2[0] == '*':
+        if s1[0] != "\0":
+            return glob_match(s1_next, s2) or glob_match(s1, s2_next)
+        else:
+            return glob_match(s1, s2_next)
+    else:
+        return False
+
+def get_ignored_files(gitignore_path):
+    fi = fileinput.input(gitignore_path)
+    start = os.path.dirname(gitignore_path)
+    ignored_files = []
+
+    for line in fi:
+        parts = line.replace("\n", "").replace("\r", "").split("#")
+        if parts[0].replace(" ", "") != "":
+            ignored_files.append( os.path.relpath(parts[0], start=start))
+
+    fi.close()
+    return ignored_files
+
+def is_file_ignored(file, ignored_files):
+    for ignored_file in ignored_files:
+        if glob_match(file, ignored_file):
+            return True
+    return False
 
 def check_file(file):
     content = ""
@@ -138,20 +186,23 @@ def check_function_declarations(file, content):
     func_count = 0
     for matchNum, match in enumerate(matches, start=1):
         whole_match = match.group()
-        line_nb_start = get_line_pos(content, match.start())
+        line_nb_start = get_line_pos(content, match.start() + 1)
         line_nb_end = get_line_pos(content, match.end())
         if line_nb_end - line_nb_start >= 23:
             show_error(file, "F4", line_nb_start)
 
-        if not re.match("^[a-z][a-z_0-9]*$", match.group(1)):
+        if match.group(1).startswith("*") and match.group(1).endswith(" "):
+            show_error(file, "V3", line_nb_start)
+
+        if not re.search("^[a-z][a-z_0-9]*$", match.group(2)):
             show_error(file, "F2", line_nb_start)
 
-        args_str = match.group(2)
+        args_str = match.group(3)
         if args_str.count(",") > 3 or args_str.replace(" ", "") == "":
             show_error(file, "F5", line_nb_start)
 
         # if no newline present between function ")" and "{"
-        if not "\n" in match.group(3):
+        if not "\n" in match.group(4):
             show_error(file, "L3", line_nb_start)
         func_count += 1
     if func_count > 5:
@@ -196,9 +247,9 @@ def check_lines(file):
         if "\t" in line or re.search('\t', line):
             show_error(file, "L2", line_nb)
 
-        if re.search('(\t|    ){3,}(while|for|if)', line):
+        if re.search('(\t|    ){4,}(while|for|if)', line):
             show_error(file, "C1", line_nb)
-        if re.search('(\t|    ){2,}\}?\s*(else if)', line):
+        if re.search('(\t|    ){3,}\}?\s*(else if)', line):
             show_error(file, "C1", line_nb)
 
 
@@ -226,20 +277,27 @@ def check_lines(file):
 
     fi.close()
 
-def read_dir(dir):
-    for file in os.listdir(dir):
-        if not file.startswith(".") \
-        and not re.match("^[a-z][a-z_0-9]*($|\.)", file):
-            show_error(file, "O4")
+def read_dir(dir, ignored_files):
+    if os.path.exists(dir + "/.gitignore"):
+        ignored_files = ignored_files.copy()
+        ignored_files.extend(get_ignored_files(dir + "/.gitignore"))
 
+    for file in os.listdir(dir):
         if os.path.isfile(dir + "/" + file):
             if re.search('\.(c|h)$', file):
+                if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', file):
+                    show_error(dir + "/" + file, "O4")
                 check_file(dir + "/" + file)
-            elif re.search('\.(o|sh|a|so|d|gcda|gcno|out|swp|elf|obj)$', file):
+            elif not is_file_ignored(dir + "/" + file, ignored_files) \
+            and re.search(unnecessary_files_regex, file):
                 show_error(dir + "/" + file, "O1")
 
-        elif not (file == "tests" and os.path.exists(dir + "/.git")):
-            read_dir(dir + "/" + file)
+        elif not file.startswith(".") and not (file == "tests" \
+        and os.path.exists(dir + "/.git")):
+            if not file.startswith(".") \
+            and not re.search('^[a-z][a-z_0-9]*', file):
+                show_error(dir + "/" + file, "O4")
+            read_dir(dir + "/" + file, ignored_files)
 
 def read_args():
     global blacklist
@@ -271,4 +329,4 @@ path = read_args()
 if os.path.isfile(path):
     check_file(path)
 else:
-    read_dir(path)
+    read_dir(path, [])
