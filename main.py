@@ -243,7 +243,7 @@ def check_lines(file):
         if "\t" in line or re.search('\t', line):
             show_error(file, "L2", line_nb)
         # multiple of 4 of indentation
-        elif re.search('^( )+', line) and not re.search('^(    )+', line):
+        elif re.search('^( )+', line) and not re.search('^(    )+[^ ]', line):
             show_error(file, "L2", line_nb)
 
         if re.search('(\t|    ){4,}(while|for|if)', line):
