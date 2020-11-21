@@ -242,6 +242,9 @@ def check_lines(file):
         # tabs
         if "\t" in line or re.search('\t', line):
             show_error(file, "L2", line_nb)
+        # multiple of 4 of indentation
+        elif re.search('^\s+') and not re.search('^(    )+'):
+            show_error(file, "L2", line_nb)
 
         if re.search('(\t|    ){4,}(while|for|if)', line):
             show_error(file, "C1", line_nb)
