@@ -26,6 +26,7 @@ def usage():
     print()
     print("FLAGS")
     print("\t--no-gitignore\t\tdo not read .gitignore files")
+    print("\t--no-color\t\tdo not show colors")
     for error in errors:
         spacing = "\t" * (1 + (len(error) < 10))
         print("\t--no-" + error + " " + spacing +
@@ -159,6 +160,8 @@ def check_content(file, content):
     check_lines(file, content.splitlines(True))
 
 def get_error_color(error_type):
+    if "color" in blacklist:
+        return ""
     if error_type == "major":
         return color.MAJOR
     elif error_type == "minor":
@@ -178,7 +181,7 @@ def show_error(file, code, line = None):
 
     print(file + ":" + str(line) + "::" + code + " - "
         + get_error_color(error[1])  + error[0] + " (" + error[1] + ")"
-        + color.NORMAL)
+        + (color.NORMAL if "color" not in blacklist else ""))
 
 def check_function_declarations(file, content):
     matches = re.finditer(function_impl_regex, content, re.MULTILINE)
