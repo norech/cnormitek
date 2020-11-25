@@ -151,9 +151,12 @@ def check_file(file):
         content += line
     fi.close()
 
+    check_content(file, content)
+
+def check_content(file, content):
     check_header_comment(file, content)
     check_function_declarations(file, content)
-    check_lines(file)
+    check_lines(file, content.splitlines(True))
 
 def get_error_color(error_type):
     if error_type == "major":
@@ -210,14 +213,13 @@ def check_header_comment(file, content):
     if not matches:
         show_error(file, "G1")
 
-def check_lines(file):
-    fi = fileinput.input(file)
+def check_lines(file, lines):
 
     line_nb = 0
     has_include_guard = False
     was_statement = False
 
-    for line in fi:
+    for line in lines:
         line_nb += 1
 
         # don't match headers
@@ -274,8 +276,6 @@ def check_lines(file):
     if file.endswith(".h") and not has_include_guard:
         show_error(file, "H2")
 
-    fi.close()
-
 def read_dir(dir, ignored_files):
     if os.path.exists(dir + "/.gitignore"):
         ignored_files = ignored_files.copy()
@@ -325,7 +325,9 @@ def read_args():
     return path
 
 path = read_args()
-if os.path.isfile(path):
+if path == "-":
+    check_content("stdin", ''.join(sys.stdin.readlines()))
+elif os.path.isfile(path):
     check_file(path)
 else:
     read_dir(path, [])
