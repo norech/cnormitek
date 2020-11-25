@@ -62,7 +62,7 @@ forbidden_syscall_regex = (
         r'|iscntrl|isdigit|isgraph|islower|isprint|inpunct|isspace|isupper'
         r'|isxdigit|tolower|toupper|localeconv|setlocale|longjmp|setjmp'
         r'|raise|signal|atexit|div|abs|labs|ldiv'
-        r')[^0-9a-zA-Z_]( |\t)*\('
+        r')( |\t)*\('
         )
 
 unnecessary_files_regex = (
