@@ -86,8 +86,8 @@ errors = {
         "F5": ("too many arguments or missing void", "major"),
         "G1": ("bad or missing header", "major"),
         "O1": ("delivery folder should not contain unnecessary files", "major"),
-        "O3": ("too many functions in file", "major"), 
-        "O4": ("file or folder should be named in snake_case", "major"), 
+        "O3": ("too many functions in file", "major"),
+        "O4": ("file or folder should be named in snake_case", "major"),
 
         "C1": ("probably too many conditions nested", "minor"),
         "C3": ("goto is discouraged", "minor"),
@@ -284,22 +284,26 @@ def read_dir(dir, ignored_files):
         ignored_files = ignored_files.copy()
         ignored_files.extend(get_ignored_files(dir + "/.gitignore"))
 
-    for file in os.listdir(dir):
-        if os.path.isfile(dir + "/" + file):
-            if re.search('\.(c|h)$', file):
-                if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', file):
-                    show_error(dir + "/" + file, "O4")
-                check_file(dir + "/" + file)
-            elif not is_file_ignored(dir + "/" + file, ignored_files) \
-            and re.search(unnecessary_files_regex, file):
-                show_error(dir + "/" + file, "O1")
+    try:
+        for file in os.listdir(dir):
+            if os.path.isfile(dir + "/" + file):
+                if re.search('\.(c|h)$', file):
+                    if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', file):
+                        show_error(dir + "/" + file, "O4")
+                    check_file(dir + "/" + file)
+                elif not is_file_ignored(dir + "/" + file, ignored_files) \
+                and re.search(unnecessary_files_regex, file):
+                    show_error(dir + "/" + file, "O1")
 
-        elif not file.startswith(".") and not (file == "tests" \
-        and os.path.exists(dir + "/.git")):
-            if not file.startswith(".") \
-            and not re.search('^[a-z][a-z_0-9]*', file):
-                show_error(dir + "/" + file, "O4")
-            read_dir(dir + "/" + file, ignored_files)
+            elif not file.startswith(".") and not (file == "tests" \
+            and os.path.exists(dir + "/.git")):
+                if not file.startswith(".") \
+                and not re.search('^[a-z][a-z_0-9]*', file):
+                    show_error(dir + "/" + file, "O4")
+                read_dir(dir + "/" + file, ignored_files)
+    except FileNotFoundError as error:
+        print("cnormitek: " + str(error))
+        sys.exit(84)
 
 def read_args():
     global blacklist
@@ -307,11 +311,8 @@ def read_args():
     args = sys.argv
     path = None
 
-    if not len(args) > 1:
-        usage()
-
     for i in range(1, len(args)):
-        if args[i] == "--help":
+        if args[i] == "--help" or args[i] == "-h":
             usage()
         if args[i].startswith('--no-'):
             blacklist.append(args[i][5:])
