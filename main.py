@@ -80,6 +80,11 @@ function_impl_regex = (
         r"{(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
         )
 
+macro_statement_regex = (
+        r"(?:\n|^)(#define) ([A-Za-z0-9]+)\([^\n]+\)"
+        r"(?:\\\n|\\\n\r| |\t)*?(?:|\()(?:\\\n|\\\n\r| |\t)*?\{"
+        )
+
 errors = {
         "F2": ("function name should be in snake_case", "major"),
         "F3": ("too many columns", "major"),
@@ -89,10 +94,12 @@ errors = {
         "O1": ("delivery folder should not contain unnecessary files", "major"),
         "O3": ("too many functions in file", "major"), 
         "O4": ("file or folder should be named in snake_case", "major"), 
+        "C2": ("only header files should contain macros and static inline functions", "major"),
 
         "C1": ("probably too many conditions nested", "minor"),
         "C3": ("goto is discouraged", "minor"),
         "H2": ("no inclusion guard found", "minor"),
+        "H3": ("macros should not be used for constants and should only match one statement", "minor"),
         "L2": ("bad indentation", "minor"),
         "L3": ("misplaced or missing space", "minor"),
         "V3": ("pointer symbol is not attached to the name", "minor"),
@@ -158,6 +165,7 @@ def check_file(file):
 def check_content(file, content):
     check_header_comment(file, content)
     check_function_declarations(file, content)
+    check_defines(file, content)
     check_lines(file, content.splitlines(True))
 
 def get_error_color(error_type):
@@ -184,32 +192,39 @@ def show_error(file, code, line = None):
         + get_error_color(error[1])  + error[0] + " (" + error[1] + ")"
         + (color.NORMAL if "color" not in blacklist else ""))
 
+def check_defines(file, content):
+    matches = re.finditer(macro_statement_regex, content, re.MULTILINE)
+    for match in matches:
+        line_nb = get_line_pos(content, match.start() + 1)
+        show_error(file, "H3", line_nb)
+
 def check_function_declarations(file, content):
     matches = re.finditer(function_impl_regex, content, re.MULTILINE)
     func_count = 0
-    for matchNum, match in enumerate(matches, start=1):
+    for match in matches:
         whole_match = match.group()
-        line_nb_start = get_line_pos(content, match.start() + 1)
+        line_nb = get_line_pos(content, match.start(3))
+        line_nb_start = get_line_pos(content, match.end(4))
         line_nb_end = get_line_pos(content, match.end())
-        if line_nb_end - line_nb_start >= 23:
-            show_error(file, "F4", line_nb_start)
+        if line_nb_end - line_nb_start > 21:
+            show_error(file, "F4", line_nb)
 
-        if match.group(1).startswith("*") and match.group(1).endswith(" "):
-            show_error(file, "V3", line_nb_start)
+        if match.group(1) is not None and match.group(1).startswith("*") and match.group(1).endswith(" "):
+            show_error(file, "V3", line_nb)
 
         if not re.search("^[a-z][a-z_0-9]*$", match.group(2)):
-            show_error(file, "F2", line_nb_start)
+            show_error(file, "F2", line_nb)
 
         args_str = match.group(3)
         if args_str.count(",") > 3 or args_str.replace(" ", "") == "":
-            show_error(file, "F5", line_nb_start)
+            show_error(file, "F5", line_nb)
 
         # if no newline present between function ")" and "{"
         if not "\n" in match.group(4):
-            show_error(file, "L3", line_nb_start)
+            show_error(file, "L3", line_nb)
         func_count += 1
-    if func_count > 5:
-        show_error(file, "O3")
+        if func_count > 5:
+            show_error(file, "O3", line_nb)
 
 def check_header_comment(file, content):
     matches = re.search(header_regex, content)
@@ -230,6 +245,15 @@ def check_lines(file, lines):
         if line.startswith("/*") or line.startswith("**") \
         or line.startswith("*/"):
             continue
+
+        if re.search('^\s*\#define [A-Za-z0-9]+ ', line):
+            show_error(file, "H3", line_nb)
+
+        if re.search('^\s*\#define', line) and not file.endswith(".h") and not file == "stdin":
+            show_error(file, "C2", line_nb)   
+
+        if re.search('^static inline', line) or re.search('^inline static', line):
+            show_error(file, "C2", line_nb)            
 
         # match ifndef or other if
         if re.search('^\s*\#if', line):
