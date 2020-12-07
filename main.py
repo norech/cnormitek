@@ -252,7 +252,7 @@ def check_lines(file, lines):
         if re.search('^\s*\#define', line) and not file.endswith(".h") and not file == "stdin":
             show_error(file, "C2", line_nb)   
 
-        if re.search('^static inline', line) or re.search('^inline static', line) \
+        if (re.search('^static inline', line) or re.search('^inline static', line)) \
         and not file.endswith(".h") and not file == "stdin":
             show_error(file, "C2", line_nb)            
 
