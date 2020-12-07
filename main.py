@@ -75,7 +75,7 @@ unnecessary_files_regex = (
         )
 
 function_impl_regex = (
-        r"\n(?:\w+(?: \w+| \w+ |)*(\*+[ ]*| ))(\w+)"
+        r"(?:^|\n)(?:\w+(?: \w+| \w+ |)*(\*+[ ]*| ))(\w+)"
         r"\(((?:.|\n +|\n\t+)*)\)((?:\n|\r|\s)*)"
         r"{(?:\s+(?:[^\n]*)(?:\n|\r)|(?:\n|\r))*}"
         )
@@ -252,7 +252,8 @@ def check_lines(file, lines):
         if re.search('^\s*\#define', line) and not file.endswith(".h") and not file == "stdin":
             show_error(file, "C2", line_nb)   
 
-        if re.search('^static inline', line) or re.search('^inline static', line):
+        if re.search('^static inline', line) or re.search('^inline static', line) \
+        and not file.endswith(".h") and not file == "stdin":
             show_error(file, "C2", line_nb)            
 
         # match ifndef or other if
