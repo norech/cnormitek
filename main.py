@@ -77,7 +77,7 @@ unnecessary_files_regex = (
 function_impl_regex = (
         r"(?:^|\n)(?:\w+?(?: \w+?| \w+? )*?((?:\*| )+?))(\w+?)"
         r"\(((?:\n[\t ]+?|[^\)])*?)\)([\n\r\s]*?)"
-        r"{(?:\s+?(?:[^\n]*?)(?:\n|\r)|(?:\n|\r))*?}"
+        r"{((?:\s+?(?:[^\n]*?)(?:\n|\r)|(?:\n|\r))*?)}"
         )
 
 macro_statement_regex = (
@@ -103,8 +103,12 @@ errors = {
         "L2": ("bad indentation", "minor"),
         "L3": ("misplaced or missing space", "minor"),
         "V3": ("pointer symbol is not attached to the name", "minor"),
+        "G7": ("line endings must be done in UNIX style (LF)", "minor"),
+        "G8": ("trailing space", "minor"),
+        "G9": ("one single trailing line must be present", "minor"),
+        "F6": ("no comment inside a function", "minor"),
+        "L6": ("one line break should be present to separate declarations from function remainder", "minor"),
 
-        "implicit_L001": ("trailing space", "info"),
         "syscall": ("suspicious system call found", "info"),
         }
 
@@ -163,6 +167,8 @@ def check_file(file):
     check_content(file, content)
 
 def check_content(file, content):
+    check_eol(file, content)
+    check_eof(file, content)
     check_header_comment(file, content)
     check_function_declarations(file, content)
     check_defines(file, content)
@@ -226,6 +232,20 @@ def check_function_declarations(file, content):
         if func_count > 5:
             show_error(file, "O3", line_nb)
 
+        function_content = match.group(5)
+        if "//" in function_content or re.search("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", function_content):
+            show_error(file, "F6", line_nb)
+        if len(re.findall("\n\n", function_content.strip("\n\r"))) > 1:
+            show_error(file, "L6", line_nb)
+
+def check_eol(file, content):
+    if "\r" in content:
+        show_error(file, "G7")
+
+def check_eof(file, content):
+    if not content.rstrip(' \t').endswith("\n") or content.endswith("\n\n"):
+        show_error(file, "G9", get_line_pos(content, len(content)))
+
 def check_header_comment(file, content):
     matches = re.search(header_regex, content)
 
@@ -277,9 +297,9 @@ def check_lines(file, lines):
         elif re.search('^( )+', line) and not re.search('^(    )+[^ ]', line):
             show_error(file, "L2", line_nb)
 
-        if re.search('(\t|    ){4,}(while|for|if)', line):
+        if re.search('(\t|    ){3,}(while|for|if)', line):
             show_error(file, "C1", line_nb)
-        if re.search('(\t|    ){3,}\}?\s*(else if)', line):
+        if re.search('(\t|    ){2,}\}?\s*(else if)', line):
             show_error(file, "C1", line_nb)
 
 
@@ -300,7 +320,7 @@ def check_lines(file, lines):
 
         # trailing spaces
         if re.search('\s+\n$', line):
-            show_error(file, "implicit_L001", line_nb)
+            show_error(file, "G8", line_nb)
 
     if file.endswith(".h") and not has_include_guard:
         show_error(file, "H2")
