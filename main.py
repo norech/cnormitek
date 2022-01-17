@@ -270,14 +270,17 @@ def check_lines(file, lines):
             show_error(file, "H3", line_nb)
 
         if re.search('^\s*\#define', line) and not file.endswith(".h") and not file == "stdin":
-            show_error(file, "C2", line_nb)   
+            show_error(file, "C2", line_nb)
 
         if (re.search('^static inline', line) or re.search('^inline static', line)) \
         and not file.endswith(".h") and not file == "stdin":
-            show_error(file, "C2", line_nb)            
+            show_error(file, "C2", line_nb)
 
         # match ifndef or other if
         if re.search('^\s*\#if', line):
+            has_include_guard = True
+
+        if re.search('^\s*\#pragma once$', line):
             has_include_guard = True
 
         # check for forbidden system_call
