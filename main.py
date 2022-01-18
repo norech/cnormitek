@@ -11,7 +11,8 @@ class color:
     NORMAL  = '\033[0m'
 
 blacklist = []
-allowed_syscalls = [ "malloc", "free", "write" ]
+allowed_syscalls = []
+disallowed_syscalls = []
 
 def usage():
     print(
@@ -22,7 +23,10 @@ def usage():
     print("OPTIONS")
     print("\t--allowed=<functions>")
     print("\t\tA comma-separated list of allowed system calls")
-    print("\t\tIf omitted, defaults to: " + ",".join(allowed_syscalls))
+    print("\t\tIf omitted, all system calls are allowed, unless those specified with --disallowed")
+    print()
+    print("\t--disallowed=<functions>")
+    print("\t\tA comma-separated list of disallowed system calls")
     print()
     print("FLAGS")
     print("\t--no-gitignore\t\tdo not read .gitignore files")
@@ -61,7 +65,18 @@ forbidden_syscall_regex = (
         r'|difftime|gmtime|localtime|mktime|strftime|assert|isalpha|isalnum'
         r'|iscntrl|isdigit|isgraph|islower|isprint|inpunct|isspace|isupper'
         r'|isxdigit|tolower|toupper|localeconv|setlocale|longjmp|setjmp'
-        r'|raise|signal|atexit|div|abs|labs|ldiv'
+        r'|raise|signal|sigaction|atexit|div|abs|labs|ldiv|llabs|atoi'
+        r'|atol|strtod|strtol|strtoll|strtoul|wcstombs|mbstowcs|mblen|mbtowc'
+        r'|wctomb|malloc|calloc|realloc|free|abort|exit|getenv|system|rand|srand'
+        r'|qsort|bsearch|qsort_r|bsearch_r|lldiv|atoll|strtoull|strtouq|strtoul'
+        r'|strtoumax|strtof|strtold|strtoimax|strtol|strtoll|strtoumax|strtold'
+        r'|strtof|strtod|strtoq|strtok|strchr|strrchr|strstr|strcasestr|strncat'
+        r'|strspn|strcspn|strpbrk|strtok_r|strsep|strsignal|strverscmp|strxfrm'
+        r'|strcoll|strxfrm|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l'
+        r'|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l'
+        r'|sbrk|wbrk|mbrk|mallinfo|mallopt|malloc_info|malloc_stats|malloc_trim'
+        r'|posix_memalign|valloc|pvalloc|memalign|aligned_alloc|valloc|pvalloc'
+        r'|strtoupper|strtolower|assert'
         r')( |\t)*\('
         )
 
@@ -286,11 +301,15 @@ def check_lines(file, lines):
         if re.search('^\s*\#pragma once$', line):
             has_include_guard = True
 
-        # check for forbidden system_call
+        # check for forbidden or allowed system_call
         syscalls = re.finditer(forbidden_syscall_regex, line)
         for matchNum, match in enumerate(syscalls, start=1):
-            if not match.group(1) in allowed_syscalls:
-                show_error(file, "syscall", line_nb)
+            if len(allowed_syscalls) > 0:
+                if not match.group(1) in allowed_syscalls:
+                    show_error(file, "syscall", line_nb)
+            if len(disallowed_syscalls) > 0:
+                if match.group(1) in disallowed_syscalls:
+                    show_error(file, "syscall", line_nb)
 
         # columns length
         if len(line.replace("\t", "    ")) > 81: # 80 characters + \n
@@ -360,6 +379,7 @@ def read_dir(dir, ignored_files):
 def read_args():
     global blacklist
     global allowed_syscalls
+    global disallowed_syscalls
     args = sys.argv
     path = None
 
@@ -371,6 +391,8 @@ def read_args():
             continue
         if args[i].startswith("--allowed="):
             allowed_syscalls = args[i][10:].split(",")
+        if args[i].startswith("--disallowed="):
+            disallowed_syscalls = args[i][10:].split(",")
             continue
         if path is not None:
             usage()
