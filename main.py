@@ -105,10 +105,11 @@ errors = {
         "V3": ("pointer symbol is not attached to the name", "minor"),
         "G7": ("line endings must be done in UNIX style (LF)", "minor"),
         "G8": ("trailing space", "minor"),
-        "G9": ("one single trailing line must be present", "minor"),
+        "G9": ("no more than one single trailing line must be present", "minor"),
         "F6": ("no comment inside a function", "minor"),
         "L6": ("one line break should be present to separate declarations from function remainder", "minor"),
 
+        "A3": ("one single trailing line must be present", "info"),
         "syscall": ("suspicious system call found", "info"),
         }
 
@@ -243,7 +244,9 @@ def check_eol(file, content):
         show_error(file, "G7")
 
 def check_eof(file, content):
-    if not content.rstrip(' \t').endswith("\n") or content.endswith("\n\n"):
+    if not content.rstrip(' \t').endswith("\n"):
+        show_error(file, "A3", get_line_pos(content, len(content)))
+    if content.endswith("\n\n"):
         show_error(file, "G9", get_line_pos(content, len(content)))
 
 def check_header_comment(file, content):
