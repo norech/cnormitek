@@ -83,7 +83,7 @@ forbidden_syscall_regex = (
 unnecessary_files_regex = (
         r'('
         r'^vgcore\.'
-        r'|\.(o|sh|a|so|d|gcda|gcno|out|swp|elf|obj)$'
+        r'|\.(o|a|so|d|gcda|gcno|swp|elf|obj)$'
         r'|^\#(.*)\#$'
         r'|~$'
         r')'
@@ -350,6 +350,12 @@ def check_lines(file, lines):
     if file.endswith(".h") and not has_include_guard:
         show_error(file, "H2")
 
+def is_elf(file):
+    file = open(file, "rb")
+    magic = file.read(4)
+    file.close()
+    return magic == b"\x7fELF"
+
 def read_dir(dir, ignored_files):
     if os.path.exists(dir + "/.gitignore"):
         ignored_files = list(element for element in ignored_files)
@@ -362,9 +368,9 @@ def read_dir(dir, ignored_files):
                     if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', file):
                         show_error(dir + "/" + file, "O4")
                     check_file(dir + "/" + file)
-                elif not is_file_ignored(dir + "/" + file, ignored_files) \
-                and re.search(unnecessary_files_regex, file):
-                    show_error(dir + "/" + file, "O1")
+                elif not is_file_ignored(dir + "/" + file, ignored_files):
+                    if re.search(unnecessary_files_regex, file) or is_elf(dir + "/" + file):
+                        show_error(dir + "/" + file, "O1")
 
             elif not file.startswith(".") and not (file == "tests" \
             and os.path.exists(dir + "/.git")):
