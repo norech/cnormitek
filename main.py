@@ -228,7 +228,7 @@ def check_function_declarations(file, content):
         line_nb = get_line_pos(content, match.start(3))
         line_nb_start = get_line_pos(content, match.end(4))
         line_nb_end = get_line_pos(content, match.end())
-        if line_nb_end - line_nb_start > 22:
+        if line_nb_end - line_nb_start > 19 + 2:
             show_error(file, "F4", line_nb)
 
         if match.group(1) is not None and match.group(1).startswith("*") and match.group(1).endswith(" "):
