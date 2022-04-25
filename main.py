@@ -226,7 +226,7 @@ def check_content(file, content):
     check_eol(file, content)
     check_eof(file, content)
     check_header_comment(file, content)
-    check_function_declarations(file, content)
+    check_function_implementations(file, content)
     check_defines(file, content)
     check_lines(file, content.splitlines(True))
 
@@ -263,7 +263,7 @@ def check_defines(file, content):
         line_nb = get_line_pos(content, match.start() + 1)
         show_error(file, "H3", line_nb)
 
-def check_function_declarations(file, content):
+def check_function_implementations(file, content):
     matches = re.finditer(function_impl_regex, content, re.MULTILINE)
     func_count = 0
     for match in matches:
@@ -271,15 +271,20 @@ def check_function_declarations(file, content):
         line_nb = get_line_pos(content, match.start(3))
         line_nb_start = get_line_pos(content, match.end(4))
         line_nb_end = get_line_pos(content, match.end())
-        if line_nb_end - line_nb_start > 19 + 2:
+
+        # too long function
+        if line_nb_end - line_nb_start - 2 >= 20:
             show_error(file, "F4", line_nb)
 
+        # misplaced pointer star in function declaration signature
         if match.group(1) is not None and match.group(1).startswith("*") and match.group(1).endswith(" "):
             show_error(file, "V3", line_nb)
 
+        # function name not in snake_case
         if not re.search("^[a-z][a-z_0-9]*$", match.group(2)):
             show_error(file, "F2", line_nb)
 
+        # too many function arguments or missing "void"
         args_str = match.group(3)
         if args_str.count(",") > 3 or args_str.replace(" ", "") == "":
             show_error(file, "F5", line_nb)
@@ -287,14 +292,19 @@ def check_function_declarations(file, content):
         # if no newline present between function ")" and "{"
         if not "\n" in match.group(4):
             show_error(file, "L3", line_nb)
+
+        # too many functions in one file
         func_count += 1
         if func_count > 5:
             show_error(file, "O3", line_nb)
 
+        # comment in function implementation
         function_content = match.group(5)
         if "//" in function_content or re.search("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", function_content):
             show_error(file, "F6", line_nb)
-        if len(re.findall("\n\n", function_content.strip("\n\r"))) > 1:
+
+        # too many blank lines in function
+        if len(re.findall("\n\n", function_content.strip("\r\n"))) > 1:
             show_error(file, "L6", line_nb)
 
 def check_eol(file, content):
@@ -314,7 +324,6 @@ def check_header_comment(file, content):
         show_error(file, "G1")
 
 def check_lines(file, lines):
-
     line_nb = 0
     has_include_guard = False
     was_statement = False
@@ -369,7 +378,6 @@ def check_lines(file, lines):
             show_error(file, "C1", line_nb)
         if re.search('(\t|    ){2,}\}?\s*(else if)', line):
             show_error(file, "C1", line_nb)
-
 
         # goto
         if "goto " in line:
