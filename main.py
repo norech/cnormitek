@@ -4,6 +4,8 @@ import sys
 import fileinput
 import re
 
+VERSION = "0.3.0"
+
 class color:
     MAJOR   = '\033[91m'
     MINOR   = '\033[92m'
@@ -15,6 +17,8 @@ allowed_syscalls = []
 disallowed_syscalls = []
 
 def usage():
+    print("cnormitek " + VERSION)
+    print()
     print(
         "Please use it as shown : cnormitek [folder] "
         "[--allowed=malloc,free,...] [--no-CODE]\n")
