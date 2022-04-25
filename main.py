@@ -12,6 +12,7 @@ class color:
     INFO    = '\033[94m'
     NORMAL  = '\033[0m'
 
+strict = False
 blacklist = []
 allowed_syscalls = []
 disallowed_syscalls = []
@@ -33,12 +34,19 @@ def usage():
     print("\t\tA comma-separated list of disallowed system calls")
     print()
     print("FLAGS")
+    print("\t--strict\t\tallow more strict error checks (cause more false positives), also enables checks for " + ', '.join(strict_error_checks))
     print("\t--no-gitignore\t\tdo not read .gitignore files")
     print("\t--no-color\t\tdo not show colors")
+
     for error in errors:
+        strict_check_message = ""
+        if error in strict_error_checks:
+            strict_check_message = "[when strict only] "
+
         spacing = "\t" * (1 + (len(error) < 10))
-        print("\t--no-" + error + " " + spacing +
+        print("\t--no-" + error + " " + spacing + strict_check_message +
             "ignore " + error + " (" + errors[error][0] + ")")
+
     exit()
 
 header_regex = (
@@ -103,6 +111,10 @@ macro_statement_regex = (
         r"(?:\n|^)(#define) ([A-Za-z0-9]+)\([^\n]+\)"
         r"(?:\\\n|\\\n\r| |\t)*?(?:|\()(?:\\\n|\\\n\r| |\t)*?\{"
         )
+
+strict_error_checks = [
+    "H3"
+]
 
 errors = {
         "F2": ("function name should be in snake_case", "major"),
@@ -212,7 +224,8 @@ def show_error(file, code, line = None):
     if code in blacklist:
         return
 
-    error = errors[code]
+    if code in strict_error_checks and not strict:
+        return
 
     print(file + ":" + str(line) + "::" + code + " - "
         + get_error_color(error[1])  + error[0] + " (" + error[1] + ")"
@@ -387,6 +400,7 @@ def read_dir(dir, ignored_files):
         sys.exit(84)
 
 def read_args():
+    global strict
     global blacklist
     global allowed_syscalls
     global disallowed_syscalls
@@ -396,6 +410,9 @@ def read_args():
     for i in range(1, len(args)):
         if args[i] == "--help" or args[i] == "-h":
             usage()
+        if args[i] == "--strict" or args[i] == "-s":
+            strict = True
+            continue
         if args[i].startswith('--no-'):
             blacklist.append(args[i][5:])
             continue
