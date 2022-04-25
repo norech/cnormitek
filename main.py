@@ -136,6 +136,14 @@ macro_statement_regex = (
     r"(?:\\\n|\\\r\n| |\t)*?(?:|\()(?:\\\n|\\\r\n| |\t)*?\{"
 )
 
+misplaced_multiline_before_else_regex = (
+    r"}(?: |\t)*(?:\n|\r\n)(?: |\t)*else(?: |\t)+?"
+)
+
+misplaced_multiline_after_else_regex = (
+    r"(?: |\t)else(?:(?:\n|\r\n)|(?: |\t)+?(.*?)(?:\n|\r\n))(?: |\t)*?{"
+)
+
 strict_error_checks = [
     "H3"
 ]
@@ -228,6 +236,7 @@ def check_content(file, content):
     check_header_comment(file, content)
     check_function_implementations(file, content)
     check_defines(file, content)
+    check_misplaced_multiline_spaces(file, content)
     check_lines(file, content.splitlines(True))
 
 def get_error_color(error_type):
@@ -256,6 +265,12 @@ def show_error(file, code, line = None):
     print(file + ":" + str(line) + "::" + code + " - "
         + get_error_color(type) + desc + " (" + type + ")"
         + (color.NORMAL if "color" not in blacklist else ""))
+
+def check_misplaced_multiline_spaces(file, content):
+    for match in re.finditer(misplaced_multiline_before_else_regex, content):
+        show_error(file, "L3", get_line_pos(content, match.start()))
+    for match in re.finditer(misplaced_multiline_after_else_regex, content):
+        show_error(file, "L3", get_line_pos(content, match.start()))
 
 def check_defines(file, content):
     matches = re.finditer(macro_statement_regex, content, re.MULTILINE)
