@@ -149,32 +149,33 @@ strict_error_checks = [
 ]
 
 errors = {
-        "F2": ("function name should be in snake_case", "major"),
-        "F3": ("too many columns", "major"),
-        "F4": ("too long function", "major"),
-        "F5": ("too many arguments or missing void", "major"),
-        "G1": ("bad or missing header", "major"),
-        "O1": ("delivery folder should not contain unnecessary files", "major"),
-        "O3": ("too many functions in file", "major"), 
-        "O4": ("file or folder should be named in snake_case", "major"), 
-        "C2": ("only header files should contain macros and static inline functions", "major"),
+    "F2": ("function name should be in snake_case", "major"),
+    "F3": ("too many columns", "major"),
+    "F4": ("too long function", "major"),
+    "F5": ("too many arguments or missing void", "major"),
+    "G1": ("bad or missing header", "major"),
+    "O1": ("delivery folder should not contain unnecessary files", "major"),
+    "O3": ("too many functions in file", "major"),
+    "O4": ("file or folder should be named in snake_case", "major"),
+    "C2": ("only header files should contain macros and static inline functions", "major"),
 
-        "C1": ("probably too many conditions nested", "minor"),
-        "C3": ("goto is discouraged", "minor"),
-        "H2": ("no inclusion guard found", "minor"),
-        "H3": ("macros should not be used for constants and should only match one statement", "minor"),
-        "L2": ("bad indentation", "minor"),
-        "L3": ("misplaced or missing space", "minor"),
-        "V3": ("pointer symbol is not attached to the name", "minor"),
-        "G7": ("line endings must be done in UNIX style (LF)", "minor"),
-        "G8": ("trailing space", "minor"),
-        "G9": ("no more than one single trailing line must be present", "minor"),
-        "F6": ("no comment inside a function", "minor"),
-        "L6": ("one line break should be present to separate declarations from function remainder", "minor"),
+    "C1": ("probably too many conditions nested", "minor"),
+    "C3": ("goto is discouraged", "minor"),
+    "H2": ("no inclusion guard found", "minor"),
+    "H3": ("macros should not be used for constants and should only match one statement", "minor"),
+    "L2": ("bad indentation", "minor"),
+    "L3": ("misplaced or missing space", "minor"),
+    "V3": ("pointer symbol is not attached to the name", "minor"),
+    "G2": ("only one empty line should separate the implementations of functions", "minor"),
+    "G7": ("line endings must be done in UNIX style (LF)", "minor"),
+    "G8": ("trailing space", "minor"),
+    "G9": ("no more than one single trailing line must be present", "minor"),
+    "F6": ("no comment inside a function", "minor"),
+    "L6": ("one line break should be present to separate implementations from function remainder", "minor"),
 
-        "A3": ("one single trailing line must be present", "info"),
-        "syscall": ("suspicious system call found", "info"),
-        }
+    "A3": ("one single trailing line must be present", "info"),
+    "syscall": ("suspicious system call found", "info"),
+}
 
 def get_line_pos(string, pos):
     line = 1
@@ -281,6 +282,7 @@ def check_defines(file, content):
 def check_function_implementations(file, content):
     matches = re.finditer(function_impl_regex, content, re.MULTILINE)
     func_count = 0
+    previous_function_end = -1
     for match in matches:
         whole_match = match.group()
         line_nb = get_line_pos(content, match.start(3))
@@ -321,6 +323,16 @@ def check_function_implementations(file, content):
         # too many blank lines in function
         if len(re.findall("\n\n", function_content.strip("\r\n"))) > 1:
             show_error(file, "L6", line_nb)
+
+        # too many blank lines between function implementations
+        if previous_function_end != -1:
+            content_btw_functions = content[previous_function_end:match.start()];
+            content_wo_spaces = content_btw_functions.replace(" ", "").replace("\t", "")
+            content_wo_spaces_nl = content_wo_spaces.replace("\n", "").replace("\r", "")
+            if len(content_wo_spaces_nl) == 0 and content_wo_spaces.count("\n") != 1:
+                show_error(file, "G2", line_nb)
+
+        previous_function_end = match.end()
 
 def check_eol(file, content):
     if "\r" in content:
