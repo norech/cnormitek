@@ -50,67 +50,91 @@ def usage():
     exit()
 
 header_regex = (
-        r"^"
-        r"\/\*\n"
-        r"\*\* EPITECH PROJECT, [0-9]{4}\n"
-        r"\*\* (.*)\n"
-        r"\*\* File description:\n"
-        r"\*\* (.*)\n"
-        r"\*\/"
-        )
+    r"^"
+    r"\/\*\n"
+    r"\*\* EPITECH PROJECT, [0-9]{4}\n"
+    r"\*\* (.*)\n"
+    r"\*\* File description:\n"
+    r"\*\* (.*)\n"
+    r"\*\/"
+)
 
 forbidden_syscall_regex = (
-        r'(?:^|[^0-9a-zA-Z_])(printf|dprintf|fprintf|vprintf|sprintf|snprintf'
-        r'|vprintf|vfprintf|vsprintf|vsnprintf|asprintf|scranf|memcpy|memset'
-        r'|memmove|strcat|strchr|strcpy|atoi|strlen|strstr|strncat|strncpy'
-        r'|strcasestr|strncasestr|strcmp|strncmp|strtok|strnlen|strdup|realloc'
-        r'|write|free|malloc|opendir|readdir|closedir|stat|lstat|getpwuid'
-        r'|getgrgid|time|ctime|readlink|perror|strerrir|exit|calloc|realloc'
-        r'|qsort|bsearch|rand|srand|atof|atoi|atol|strtod|strtol|strtoll'
-        r'|strtoul|mblen|mbtowc|wctomb|mbstowcs|wcstombs|fscanf|scanf'
-        r'|sscanf|fopen|fflush|fclose|freopen|remove|rename|setbuf|setvbuf'
-        r'|tmpfile|tmpnam|fgetc|fgets|fputc|fputs|getc|getchar|gets|putc'
-        r'|putchar|puts|ungetc|fread|fwrite|fgetpos|fseek|fsetpos|ftell|rewind'
-        r'|clearerr|feof|perror|memcmp|strcmp|strcoll|strxfrm|strcspn'
-        r'|strpbrk|acos|asin|atan|atan2|ceil|cos|cosh|exp|fabs|floor|fmod|frexp'
-        r'|ldexp|log|log10|modf|pow|sin|sinh|sqrt|tan|tanh|clock|asctime'
-        r'|difftime|gmtime|localtime|mktime|strftime|assert|isalpha|isalnum'
-        r'|iscntrl|isdigit|isgraph|islower|isprint|inpunct|isspace|isupper'
-        r'|isxdigit|tolower|toupper|localeconv|setlocale|longjmp|setjmp'
-        r'|raise|signal|sigaction|atexit|div|abs|labs|ldiv|llabs|atoi'
-        r'|atol|strtod|strtol|strtoll|strtoul|wcstombs|mbstowcs|mblen|mbtowc'
-        r'|wctomb|malloc|calloc|realloc|free|abort|exit|getenv|system|rand|srand'
-        r'|qsort|bsearch|qsort_r|bsearch_r|lldiv|atoll|strtoull|strtouq|strtoul'
-        r'|strtoumax|strtof|strtold|strtoimax|strtol|strtoll|strtoumax|strtold'
-        r'|strtof|strtod|strtoq|strtok|strchr|strrchr|strstr|strcasestr|strncat'
-        r'|strspn|strcspn|strpbrk|strtok_r|strsep|strsignal|strverscmp|strxfrm'
-        r'|strcoll|strxfrm|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l'
-        r'|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l'
-        r'|sbrk|wbrk|mbrk|mallinfo|mallopt|malloc_info|malloc_stats|malloc_trim'
-        r'|posix_memalign|valloc|pvalloc|memalign|aligned_alloc|valloc|pvalloc'
-        r'|strtoupper|strtolower|assert'
-        r')( |\t)*\('
-        )
+    r'(?:^|[^0-9a-zA-Z_])(printf|dprintf|fprintf|vprintf|sprintf|snprintf'
+    r'|vprintf|vfprintf|vsprintf|vsnprintf|asprintf|scranf|memcpy|memset'
+    r'|memmove|strcat|strchr|strcpy|atoi|strlen|strstr|strncat|strncpy'
+    r'|strcasestr|strncasestr|strcmp|strncmp|strtok|strnlen|strdup|realloc'
+    r'|write|free|malloc|opendir|readdir|closedir|stat|lstat|getpwuid'
+    r'|getgrgid|time|ctime|readlink|perror|strerrir|exit|calloc|realloc'
+    r'|qsort|bsearch|rand|srand|atof|atoi|atol|strtod|strtol|strtoll'
+    r'|strtoul|mblen|mbtowc|wctomb|mbstowcs|wcstombs|fscanf|scanf'
+    r'|sscanf|fopen|fflush|fclose|freopen|remove|rename|setbuf|setvbuf'
+    r'|tmpfile|tmpnam|fgetc|fgets|fputc|fputs|getc|getchar|gets|putc'
+    r'|putchar|puts|ungetc|fread|fwrite|fgetpos|fseek|fsetpos|ftell|rewind'
+    r'|clearerr|feof|perror|memcmp|strcmp|strcoll|strxfrm|strcspn'
+    r'|strpbrk|acos|asin|atan|atan2|ceil|cos|cosh|exp|fabs|floor|fmod|frexp'
+    r'|ldexp|log|log10|modf|pow|sin|sinh|sqrt|tan|tanh|clock|asctime'
+    r'|difftime|gmtime|localtime|mktime|strftime|assert|isalpha|isalnum'
+    r'|iscntrl|isdigit|isgraph|islower|isprint|inpunct|isspace|isupper'
+    r'|isxdigit|tolower|toupper|localeconv|setlocale|longjmp|setjmp'
+    r'|raise|signal|sigaction|atexit|div|abs|labs|ldiv|llabs|atoi'
+    r'|atol|strtod|strtol|strtoll|strtoul|wcstombs|mbstowcs|mblen|mbtowc'
+    r'|wctomb|malloc|calloc|realloc|free|abort|exit|getenv|system|rand|srand'
+    r'|qsort|bsearch|qsort_r|bsearch_r|lldiv|atoll|strtoull|strtouq|strtoul'
+    r'|strtoumax|strtof|strtold|strtoimax|strtol|strtoll|strtoumax|strtold'
+    r'|strtof|strtod|strtoq|strtok|strchr|strrchr|strstr|strcasestr|strncat'
+    r'|strspn|strcspn|strpbrk|strtok_r|strsep|strsignal|strverscmp|strxfrm'
+    r'|strcoll|strxfrm|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l'
+    r'|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l|strxfrm_l'
+    r'|sbrk|wbrk|mbrk|mallinfo|mallopt|malloc_info|malloc_stats|malloc_trim'
+    r'|posix_memalign|valloc|pvalloc|memalign|aligned_alloc|valloc|pvalloc'
+    r'|strtoupper|strtolower|assert'
+    r')( |\t)*\('
+)
 
 unnecessary_files_regex = (
-        r'('
-        r'^vgcore\.'
-        r'|\.(o|a|so|d|gcda|gcno|swp|elf|obj)$'
-        r'|^\#(.*)\#$'
-        r'|~$'
-        r')'
-        )
+    r'('
+    r'^vgcore\.'
+    r'|\.(o|a|so|d|gcda|gcno|swp|elf|obj)$'
+    r'|^\#(.*)\#$'
+    r'|~$'
+    r')'
+)
 
 function_impl_regex = (
-        r"(?:^|\n)(?:\w+?(?: \w+?| \w+? )*?((?:\*| )+?))(\w+?)"
-        r"\(((?:\n[\t ]+?|[^\)])*?)\)([\n\r\s]*?)"
-        r"{((?:\s+?(?:[^\n]*?)(?:\n|\r)|(?:\n|\r))*?)}"
-        )
+    r"(?:^|\n)"                  # beginning of file or newline
+    r"(?:\w+?"                   # function type or keywords
+        r"(?: \w+?| \w+? )*?"    # additional function type or keywords (if any)
+        r"([\* ]+?)"             # pointer stars and spaces (group 1)
+    r")"
+    r"(\w+?)"                    # function name
+    r"\("                        # function arguments open parenthesis
+        r"("                     # function arguments content (group 2)
+            r"(?:"
+                r"\n[\t ]+?"     # newline and spaces
+            r"|"
+                r"[^\)\{]"       # anything but close parenthesis or open bracket
+            r")*?"               # can have 0 or more arguments
+        r")"
+    r"\)"                        # function arguments close parenthesis
+    r"((?:\\[\r\n]|[\r\n\s])*?)" # newlines/spaces between args and body (group 3)
+    r"\{"                        # function body open bracket
+        r"("                     # function body (group 4)
+            r"(?:"
+                r"\s*?"          # each line of body CAN start with spaces (not enforced due to backtracking issues!)
+                r"(?:[^\n]*?)"   # match any character except newline
+                r"(?:\n|\r)"     # match newline or carriage return
+            r"|"
+                r"(?:\n|\r)"     # maybe the line can alse be empty
+            r")*?"               # a function have 0 or more lines in body
+        r")"
+    r"\}"                        # function body close bracket
+)
 
 macro_statement_regex = (
-        r"(?:\n|^)(#define) ([A-Za-z0-9]+)\([^\n]+\)"
-        r"(?:\\\n|\\\n\r| |\t)*?(?:|\()(?:\\\n|\\\n\r| |\t)*?\{"
-        )
+    r"(?:\n|^)(#define) ([A-Za-z0-9]+)\([^\n]+\)"
+    r"(?:\\\n|\\\r\n| |\t)*?(?:|\()(?:\\\n|\\\r\n| |\t)*?\{"
+)
 
 strict_error_checks = [
     "H3"
@@ -227,8 +251,10 @@ def show_error(file, code, line = None):
     if code in strict_error_checks and not strict:
         return
 
+    (desc, type) = errors[code]
+
     print(file + ":" + str(line) + "::" + code + " - "
-        + get_error_color(error[1])  + error[0] + " (" + error[1] + ")"
+        + get_error_color(type) + desc + " (" + type + ")"
         + (color.NORMAL if "color" not in blacklist else ""))
 
 def check_defines(file, content):
