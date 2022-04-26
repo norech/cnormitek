@@ -37,10 +37,10 @@ def usage():
     print("\t\tA comma-separated list of disallowed system calls")
     print()
     print("FLAGS")
-    print("\t--cs-2020, --cs-2021\t\tSelect the prefered coding style (default: cs-" + str(year) + ")")
-    print("\t--strict\t\t\tallow more strict error checks (cause more false positives), also enables checks for " + ', '.join(strict_error_checks))
-    print("\t--no-gitignore\t\t\tdo not read .gitignore files")
-    print("\t--no-color\t\t\tdo not show colors")
+    print("\t--cs-2020, --cs-2021\tSelect the prefered coding style (default: cs-" + str(year) + ")")
+    print("\t--strict\t\tallow more strict error checks (cause more false positives), also enables checks for " + ', '.join(strict_error_checks))
+    print("\t--no-gitignore\t\tdo not read .gitignore files")
+    print("\t--no-color\t\tdo not show colors")
 
     errors_tuple = list(dict([
         (error[:-5], errors[error][0]) if error.endswith("-2020") or error.endswith("-2021")
@@ -52,8 +52,8 @@ def usage():
         if error in strict_error_checks:
             strict_check_message = "[when strict only] "
 
-        spacing = "\t" * (1 + 2 * (len(error) < 7))
-        print("\t--no-" + error + ", --" + error + " " + spacing + strict_check_message +
+        spacing = "\t" * (1 + 1 * (len(error) < 8))
+        print("\t--no-" + error + " " + spacing + strict_check_message +
             "ignore " + error + " (" + desc + ")")
 
     exit()
