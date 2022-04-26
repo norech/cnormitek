@@ -1,5 +1,6 @@
 #!/bin/python
 import os
+import subprocess
 import sys
 import fileinput
 import re
@@ -226,34 +227,19 @@ def glob_match(s1, s2):
     pattern = escaped.replace("\\*\\*", "(.*)").replace("\\*", "([^/]+)")
     return re.search("^" + pattern + "$", s1) is not None
 
-def get_ignored_files(gitignore_path):
+def is_file_ignored(file):
     if "gitignore" in blacklist:
-        return []
+        return False
 
-    fi = fileinput.input(gitignore_path)
-    start = os.path.dirname(gitignore_path)
-    ignored_files = []
-
-    for line in fi:
-        parts = line.replace("\n", "").replace("\r", "").replace("\\#", "\r").split("#")
-        if parts[0].replace(" ", "") != "":
-            file = parts[0].replace("\r", "#")
-            if not "/" in file:
-                ignored_files.append(file)
-            else:
-                abspath = os.path.abspath(start + "/" + file)
-                ignored_files.append(abspath)
-
-    fi.close()
-    return ignored_files
-
-def is_file_ignored(file, ignored_files):
-    basename = os.path.basename(file)
     file = os.path.abspath(file)
-    for ignored_file in ignored_files:
-        if glob_match(file, ignored_file) or glob_match(basename, ignored_file):
+    try:
+        output = subprocess.check_output(["git", "check-ignore", file], stderr=subprocess.STDOUT)
+        if output.strip() == "":
+            return False
+        else:
             return True
-    return False
+    except subprocess.CalledProcessError:
+        return False
 
 def check_file(file):
     content = ""
@@ -513,15 +499,11 @@ def is_elf(file):
     file.close()
     return magic == b"\x7fELF"
 
-def read_dir(dir, ignored_files):
-    if os.path.exists(dir + "/.gitignore"):
-        ignored_files = list(element for element in ignored_files)
-        ignored_files.extend(get_ignored_files(dir + "/.gitignore"))
-
+def read_dir(dir):
     try:
         for file in os.listdir(dir):
             if os.path.isfile(dir + "/" + file):
-                if is_file_ignored(dir + "/" + file, ignored_files):
+                if is_file_ignored(dir + "/" + file):
                     continue
                 if file.lower() == "makefile":
                     check_makefile(dir + "/" + file)
@@ -538,7 +520,7 @@ def read_dir(dir, ignored_files):
                 if not file.startswith(".") \
                 and not re.search('^[a-z][a-z_0-9]*', file):
                     show_error(dir + "/" + file, "O4")
-                read_dir(dir + "/" + file, ignored_files)
+                read_dir(dir + "/" + file)
     except FileNotFoundError as error:
         print("cnormitek: " + str(error))
         sys.exit(84)
@@ -587,4 +569,4 @@ if path == "-":
 elif os.path.isfile(path):
     check_file(path)
 else:
-    read_dir(path, [])
+    read_dir(path)
