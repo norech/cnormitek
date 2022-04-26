@@ -14,7 +14,7 @@ class color:
     INFO    = '\033[94m'
     NORMAL  = '\033[0m'
 
-year = 2021
+year = "2021"
 strict = False
 blacklist = []
 allowed_syscalls = []
@@ -66,6 +66,16 @@ header_regex = (
     r"\*\* File description:\n"
     r"\*\* (.*)\n"
     r"\*\/"
+)
+
+makefile_header_regex = (
+    r"^"
+    r"##\n"
+    r"## EPITECH PROJECT, (.*)\n"
+    r"## (.*)\n"
+    r"## File description:\n"
+    r"## (.*)\n"
+    r"##"
 )
 
 forbidden_syscall_regex = (
@@ -164,7 +174,8 @@ errors = {
     "F4-2020": ("too long function (should be <=20 lines) (CS2020)", "major"),
     "F4-2021": ("too long function (should be <20 lines) (CS2021)", "major"),
     "F5": ("too many arguments or missing void", "major"),
-    "G1": ("bad or missing header", "major"),
+    "G1-2020": ("bad or missing header (CS2020)", "major"),
+    "G1-2021": ("bad or missing header (CS2021)", "major"),
     "O1": ("delivery folder should not contain unnecessary files", "major"),
     "O3": ("too many functions in file", "major"),
     "O4": ("file or folder should be named in snake_case", "major"),
@@ -251,6 +262,7 @@ def check_makefile(file):
         content += line
     fi.close()
 
+    check_makefile_header_comment(file, content)
     check_makefile_lines(file, content.splitlines(True))
 
 def check_content(file, content):
@@ -387,7 +399,15 @@ def check_header_comment(file, content):
     matches = re.search(header_regex, content)
 
     if not matches:
-        show_error(file, "G1")
+        show_error(file, "G1-2020")
+        show_error(file, "G1-2021")
+
+
+def check_makefile_header_comment(file, content):
+    matches = re.search(makefile_header_regex, content)
+
+    if not matches:
+        show_error(file, "G1-2021")
 
 def check_makefile_lines(file, lines):
     line_nb = 0
