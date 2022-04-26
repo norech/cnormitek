@@ -235,12 +235,13 @@ def get_ignored_files(gitignore_path):
     ignored_files = []
 
     for line in fi:
-        parts = line.replace("\n", "").replace("\r", "").split("#")
+        parts = line.replace("\n", "").replace("\r", "").replace("\\#", "\r").split("#")
         if parts[0].replace(" ", "") != "":
-            if not "/" in parts[0]:
-                ignored_files.append(parts[0])
+            file = parts[0].replace("\r", "#")
+            if not "/" in file:
+                ignored_files.append(file)
             else:
-                abspath = os.path.abspath(start + "/" + parts[0])
+                abspath = os.path.abspath(start + "/" + file)
                 ignored_files.append(abspath)
 
     fi.close()
@@ -520,13 +521,15 @@ def read_dir(dir, ignored_files):
     try:
         for file in os.listdir(dir):
             if os.path.isfile(dir + "/" + file):
+                if is_file_ignored(dir + "/" + file, ignored_files):
+                    continue
                 if file.lower() == "makefile":
                     check_makefile(dir + "/" + file)
                 elif re.search('\.(c|h)$', file):
                     if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', file):
                         show_error(dir + "/" + file, "O4")
                     check_file(dir + "/" + file)
-                elif not is_file_ignored(dir + "/" + file, ignored_files):
+                else:
                     if re.search(unnecessary_files_regex, file) or is_elf(dir + "/" + file):
                         show_error(dir + "/" + file, "O1")
 
