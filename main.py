@@ -159,7 +159,8 @@ strict_error_checks = [
 
 errors = {
     "F2": ("function name should be in snake_case", "major"),
-    "F3": ("too many columns", "major"),
+    "F3-2020": ("too many columns (CS2020)", "major"),
+    "F3-2021": ("too many columns (CS2021)", "major"),
     "F4-2020": ("too long function (should be <=20 lines) (CS2020)", "major"),
     "F4-2021": ("too long function (should be <20 lines) (CS2021)", "major"),
     "F5": ("too many arguments or missing void", "major"),
@@ -242,6 +243,15 @@ def check_file(file):
     fi.close()
 
     check_content(file, content)
+
+def check_makefile(file):
+    content = ""
+    fi = fileinput.input(file)
+    for line in fi:
+        content += line
+    fi.close()
+
+    check_makefile_lines(file, content.splitlines(True))
 
 def check_content(file, content):
     check_eol(file, content)
@@ -379,6 +389,15 @@ def check_header_comment(file, content):
     if not matches:
         show_error(file, "G1")
 
+def check_makefile_lines(file, lines):
+    line_nb = 0
+
+    for line in lines:
+        line_nb += 1
+        # columns length
+        if len(line.replace("\t", "    ")) > 81: # 80 characters + \n
+            show_error(file, "F3-2021", line_nb)
+
 def check_lines(file, lines):
     line_nb = 0
     has_include_guard = False
@@ -421,7 +440,8 @@ def check_lines(file, lines):
 
         # columns length
         if len(line.replace("\t", "    ")) > 81: # 80 characters + \n
-            show_error(file, "F3", line_nb)
+            show_error(file, "F3-2020", line_nb)
+            show_error(file, "F3-2021", line_nb)
 
         # tabs
         if "\t" in line or re.search('\t', line):
@@ -472,7 +492,9 @@ def read_dir(dir, ignored_files):
     try:
         for file in os.listdir(dir):
             if os.path.isfile(dir + "/" + file):
-                if re.search('\.(c|h)$', file):
+                if file.lower() == "makefile":
+                    check_makefile(dir + "/" + file)
+                elif re.search('\.(c|h)$', file):
                     if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', file):
                         show_error(dir + "/" + file, "O4")
                     check_file(dir + "/" + file)
