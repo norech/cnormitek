@@ -399,7 +399,7 @@ def check_eol(file, content):
 
 def check_eof(file, content):
     if not content.rstrip(' \t').endswith("\n"):
-        show_error(file, "A3", get_line_pos(content, len(content)))
+        show_error(file, "A3-2021", get_line_pos(content, len(content)))
     if content.endswith("\n\n"):
         show_error(file, "G9-2021", get_line_pos(content, len(content)))
 
