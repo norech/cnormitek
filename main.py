@@ -177,13 +177,15 @@ errors = {
     "L3": ("misplaced or missing space", "minor"),
     "V3": ("pointer symbol is not attached to the name", "minor"),
     "G2": ("only one empty line should separate the implementations of functions", "minor"),
-    "G7": ("line endings must be done in UNIX style (LF)", "minor"),
-    "G8": ("trailing space", "minor"),
-    "G9": ("no more than one single trailing line must be present", "minor"),
+    "G7-2021": ("line endings must be done in UNIX style (LF) (CS2021)", "minor"),
+    "G8-2021": ("trailing space (CS2021)", "minor"),
+    "G9-2021": ("no more than one single trailing line must be present (CS2021)", "minor"),
     "F6": ("no comment inside a function", "minor"),
     "L6": ("one line break should be present to separate implementations from function remainder", "minor"),
 
-    "A3": ("one single trailing line must be present", "info"),
+    "implicit_LF-2020": ("line endings must be done in UNIX style (LF) (CS2020)", "info"),
+    "implicit_L001-2020": ("trailing space (CS2020)", "info"),
+    "A3-2021": ("one single trailing line must be present", "info"),
     "syscall": ("suspicious system call found", "info"),
 }
 
@@ -362,13 +364,14 @@ def check_function_implementations(file, content):
 
 def check_eol(file, content):
     if "\r" in content:
-        show_error(file, "G7")
+        show_error(file, "G7-2021")
+        show_error(file, "implicit_LF-2020")
 
 def check_eof(file, content):
     if not content.rstrip(' \t').endswith("\n"):
         show_error(file, "A3", get_line_pos(content, len(content)))
     if content.endswith("\n\n"):
-        show_error(file, "G9", get_line_pos(content, len(content)))
+        show_error(file, "G9-2021", get_line_pos(content, len(content)))
 
 def check_header_comment(file, content):
     matches = re.search(header_regex, content)
@@ -449,7 +452,8 @@ def check_lines(file, lines):
 
         # trailing spaces
         if re.search('\s+\n$', line):
-            show_error(file, "G8", line_nb)
+            show_error(file, "G8-2021", line_nb)
+            show_error(file, "implicit_L001-2020", line_nb)
 
     if file.endswith(".h") and not has_include_guard:
         show_error(file, "H2")
