@@ -16,6 +16,7 @@ class color:
 
 year = "2021"
 strict = False
+stdin_is_header = False
 blacklist = []
 allowed_syscalls = []
 disallowed_syscalls = []
@@ -212,6 +213,13 @@ def get_line_pos(string, pos):
         if char == "\n":
             line += 1
     return line
+
+def is_header_file(file):
+    if file == "stdin" and stdin_is_header:
+        return True
+    elif file == "stdin":
+        return False
+    return file.endswith(".h")
 
 def glob_match(s1, s2):
     escaped = re.escape(s2)
@@ -434,11 +442,11 @@ def check_lines(file, lines):
         if re.search('^\s*\#define [A-Za-z0-9]+ ', line):
             show_error(file, "H3-2020", line_nb)
 
-        if re.search('^\s*\#define', line) and not file.endswith(".h") and not file == "stdin":
+        if re.search('^\s*\#define', line) and not is_header_file(file):
             show_error(file, "C2", line_nb)
 
         if (re.search('^static inline', line) or re.search('^inline static', line)) \
-        and not file.endswith(".h") and not file == "stdin":
+        and not is_header_file(file):
             show_error(file, "C2", line_nb)
 
         # match ifndef or other if
@@ -495,7 +503,7 @@ def check_lines(file, lines):
             show_error(file, "G8-2021", line_nb)
             show_error(file, "implicit_L001-2020", line_nb)
 
-    if file.endswith(".h") and not has_include_guard:
+    if is_header_file(file) and not has_include_guard:
         show_error(file, "H2")
 
 def is_elf(file):
@@ -538,6 +546,7 @@ def read_args():
     global blacklist
     global allowed_syscalls
     global disallowed_syscalls
+    global stdin_is_header
     args = sys.argv
     path = None
 
@@ -546,6 +555,9 @@ def read_args():
             usage()
         if args[i] == "--strict" or args[i] == "-s":
             strict = True
+            continue
+        if args[i] == "--stdin-h":
+            stdin_is_header = True
             continue
         if args[i].startswith("--cs-") and args[i][5:] in SUPPORTED_CODING_STYLES:
             year = args[i][5:]
