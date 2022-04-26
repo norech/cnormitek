@@ -6,12 +6,15 @@ import re
 
 VERSION = "0.3.0"
 
+SUPPORTED_CODING_STYLES = ["2020", "2021"]
+
 class color:
     MAJOR   = '\033[91m'
     MINOR   = '\033[92m'
     INFO    = '\033[94m'
     NORMAL  = '\033[0m'
 
+year = 2021
 strict = False
 blacklist = []
 allowed_syscalls = []
@@ -34,18 +37,24 @@ def usage():
     print("\t\tA comma-separated list of disallowed system calls")
     print()
     print("FLAGS")
-    print("\t--strict\t\tallow more strict error checks (cause more false positives), also enables checks for " + ', '.join(strict_error_checks))
-    print("\t--no-gitignore\t\tdo not read .gitignore files")
-    print("\t--no-color\t\tdo not show colors")
+    print("\t--cs-2020, --cs-2021\t\tSelect the prefered coding style (default: cs-" + str(year) + ")")
+    print("\t--strict\t\t\tallow more strict error checks (cause more false positives), also enables checks for " + ', '.join(strict_error_checks))
+    print("\t--no-gitignore\t\t\tdo not read .gitignore files")
+    print("\t--no-color\t\t\tdo not show colors")
 
-    for error in errors:
+    errors_tuple = list(dict([
+        (error[:-5], errors[error][0]) if error.endswith("-2020") or error.endswith("-2021")
+        else (error, errors[error][0]) for error in errors
+    ]).items())
+
+    for (error, desc) in errors_tuple:
         strict_check_message = ""
         if error in strict_error_checks:
             strict_check_message = "[when strict only] "
 
-        spacing = "\t" * (1 + (len(error) < 10))
-        print("\t--no-" + error + " " + spacing + strict_check_message +
-            "ignore " + error + " (" + errors[error][0] + ")")
+        spacing = "\t" * (1 + 2 * (len(error) < 7))
+        print("\t--no-" + error + ", --" + error + " " + spacing + strict_check_message +
+            "ignore " + error + " (" + desc + ")")
 
     exit()
 
@@ -145,13 +154,14 @@ misplaced_multiline_after_else_regex = (
 )
 
 strict_error_checks = [
-    "H3"
+    "H3-2020"
 ]
 
 errors = {
     "F2": ("function name should be in snake_case", "major"),
     "F3": ("too many columns", "major"),
-    "F4": ("too long function", "major"),
+    "F4-2020": ("too long function (should be <=20 lines) (CS2020)", "major"),
+    "F4-2021": ("too long function (should be <20 lines) (CS2021)", "major"),
     "F5": ("too many arguments or missing void", "major"),
     "G1": ("bad or missing header", "major"),
     "O1": ("delivery folder should not contain unnecessary files", "major"),
@@ -162,7 +172,7 @@ errors = {
     "C1": ("probably too many conditions nested", "minor"),
     "C3": ("goto is discouraged", "minor"),
     "H2": ("no inclusion guard found", "minor"),
-    "H3": ("macros should not be used for constants and should only match one statement", "minor"),
+    "H3-2020": ("macros should not be used for constants and should only match one statement (CS2020)", "minor"),
     "L2": ("bad indentation", "minor"),
     "L3": ("misplaced or missing space", "minor"),
     "V3": ("pointer symbol is not attached to the name", "minor"),
@@ -255,15 +265,27 @@ def show_error(file, code, line = None):
     if line is None:
         line = "?"
 
-    if code in blacklist:
+    if code in strict_error_checks and not strict:
         return
 
-    if code in strict_error_checks and not strict:
+    codename = code;
+
+    if code.endswith("-2020"):
+        if year != "2020":
+            return
+        codename = code[:-5]
+
+    if code.endswith("-2021"):
+        if year != "2021":
+            return
+        codename = code[:-5]
+
+    if codename in blacklist:
         return
 
     (desc, type) = errors[code]
 
-    print(file + ":" + str(line) + "::" + code + " - "
+    print(file + ":" + str(line) + "::" + codename + " - "
         + get_error_color(type) + desc + " (" + type + ")"
         + (color.NORMAL if "color" not in blacklist else ""))
 
@@ -277,7 +299,7 @@ def check_defines(file, content):
     matches = re.finditer(macro_statement_regex, content, re.MULTILINE)
     for match in matches:
         line_nb = get_line_pos(content, match.start() + 1)
-        show_error(file, "H3", line_nb)
+        show_error(file, "H3-2020", line_nb)
 
 def check_function_implementations(file, content):
     matches = re.finditer(function_impl_regex, content, re.MULTILINE)
@@ -289,9 +311,13 @@ def check_function_implementations(file, content):
         line_nb_start = get_line_pos(content, match.end(4))
         line_nb_end = get_line_pos(content, match.end())
 
-        # too long function
-        if line_nb_end - line_nb_start - 2 >= 20:
-            show_error(file, "F4", line_nb)
+        # too long function (CS2020)
+        if line_nb_end - line_nb_start - 1 > 20:
+            show_error(file, "F4-2020", line_nb)
+
+        # too long function (CS2021)
+        if line_nb_end - line_nb_start - 1 >= 20:
+            show_error(file, "F4-2021", line_nb)
 
         # misplaced pointer star in function declaration signature
         if match.group(1) is not None and match.group(1).startswith("*") and match.group(1).endswith(" "):
@@ -364,7 +390,7 @@ def check_lines(file, lines):
             continue
 
         if re.search('^\s*\#define [A-Za-z0-9]+ ', line):
-            show_error(file, "H3", line_nb)
+            show_error(file, "H3-2020", line_nb)
 
         if re.search('^\s*\#define', line) and not file.endswith(".h") and not file == "stdin":
             show_error(file, "C2", line_nb)
@@ -461,6 +487,7 @@ def read_dir(dir, ignored_files):
         sys.exit(84)
 
 def read_args():
+    global year
     global strict
     global blacklist
     global allowed_syscalls
@@ -473,6 +500,9 @@ def read_args():
             usage()
         if args[i] == "--strict" or args[i] == "-s":
             strict = True
+            continue
+        if args[i].startswith("--cs-") and args[i][5:] in SUPPORTED_CODING_STYLES:
+            year = args[i][5:]
             continue
         if args[i].startswith('--no-'):
             blacklist.append(args[i][5:])
