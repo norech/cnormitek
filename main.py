@@ -501,26 +501,27 @@ def is_elf(file):
 
 def read_dir(dir):
     try:
-        for file in os.listdir(dir):
-            if os.path.isfile(dir + "/" + file):
-                if is_file_ignored(dir + "/" + file):
+        for filename in os.listdir(dir):
+            filepath = dir + "/" + filename
+            if os.path.isfile(filepath):
+                if is_file_ignored():
                     continue
-                if file.lower() == "makefile":
-                    check_makefile(dir + "/" + file)
-                elif re.search('\.(c|h)$', file):
-                    if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', file):
-                        show_error(dir + "/" + file, "O4")
-                    check_file(dir + "/" + file)
+                if filename.lower() == "makefile":
+                    check_makefile(filepath)
+                elif re.search('\.(c|h)$', filename):
+                    if not re.search('^[a-z][a-z_0-9]*\.(c|h)$', filename):
+                        show_error(filepath, "O4")
+                    check_file(filepath)
                 else:
-                    if re.search(unnecessary_files_regex, file) or is_elf(dir + "/" + file):
-                        show_error(dir + "/" + file, "O1")
+                    if re.search(unnecessary_files_regex, filename) or is_elf(filepath):
+                        show_error(filepath, "O1")
 
-            elif not file.startswith(".") and not (file == "tests" \
+            elif not filename.startswith(".") and not (filename == "tests" \
             and os.path.exists(dir + "/.git")):
-                if not file.startswith(".") \
-                and not re.search('^[a-z][a-z_0-9]*', file):
-                    show_error(dir + "/" + file, "O4")
-                read_dir(dir + "/" + file)
+                if not filename.startswith(".") \
+                and not re.search('^[a-z][a-z_0-9]*', filename):
+                    show_error(filepath, "O4")
+                read_dir(filepath)
     except FileNotFoundError as error:
         print("cnormitek: " + str(error))
         sys.exit(84)
