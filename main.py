@@ -184,9 +184,9 @@ errors = {
     "F6": ("no comment inside a function", "minor"),
     "L6": ("one line break should be present to separate implementations from function remainder", "minor"),
 
+    "A3-2021": ("one single trailing line must be present", "info"),
     "implicit_LF-2020": ("line endings must be done in UNIX style (LF) (CS2020)", "info"),
     "implicit_L001-2020": ("trailing space (CS2020)", "info"),
-    "A3-2021": ("one single trailing line must be present", "info"),
     "syscall": ("suspicious system call found", "info"),
 }
 
