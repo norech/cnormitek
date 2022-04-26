@@ -71,7 +71,7 @@ header_regex = (
 makefile_header_regex = (
     r"^"
     r"##\n"
-    r"## EPITECH PROJECT, (.*)\n"
+    r"## EPITECH PROJECT, [0-9]{4}\n"
     r"## (.*)\n"
     r"## File description:\n"
     r"## (.*)\n"
