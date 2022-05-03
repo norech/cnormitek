@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 import os
 import subprocess
 import sys
@@ -504,7 +504,7 @@ def read_dir(dir):
         for filename in os.listdir(dir):
             filepath = dir + "/" + filename
             if os.path.isfile(filepath):
-                if is_file_ignored():
+                if is_file_ignored(filepath):
                     continue
                 if filename.lower() == "makefile":
                     check_makefile(filepath)
