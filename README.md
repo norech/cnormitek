@@ -50,3 +50,16 @@ cat code.c | cnormitek -
 # Runs cnormitek from the input stream (as a C header file)
 cat code.h | cnormitek --stdin-h -
 ```
+
+## Install manually the vscode extension
+
+It requires to have npm, vscode and cnormitek preinstalled before
+
+```c
+git clone https://github.com/norech/vscode-cnormitek /tmp/vscode-cnormitek
+cd /tmp/vscode-cnormitek
+npm install
+npm run compile
+mkdir -p ~/.vscode/extensions
+cp -r /tmp/vscode-cnormitek ~/.vscode/extensions
+```
