@@ -174,7 +174,7 @@ errors = {
     "F3-2020": ("too many columns (CS2020)", "major"),
     "F3-2021": ("too many columns (CS2021)", "major"),
     "F4-2020": ("too long function (should be <=20 lines) (CS2020)", "major"),
-    "F4-2021": ("too long function (should be <20 lines) (CS2021)", "major"),
+    "F4-2021": ("too long function (should be <=20 lines) (CS2021)", "major"),
     "F5": ("too many arguments or missing void", "major"),
     "G1-2020": ("bad or missing header (CS2020)", "major"),
     "G1-2021": ("bad or missing header (CS2021)", "major"),
@@ -335,7 +335,7 @@ def check_function_implementations(file, content):
             show_error(file, "F4-2020", line_nb)
 
         # too long function (CS2021)
-        if line_nb_end - line_nb_start - 1 >= 20:
+        if line_nb_end - line_nb_start - 1 > 20:
             show_error(file, "F4-2021", line_nb)
 
         # misplaced pointer star in function declaration signature
