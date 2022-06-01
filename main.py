@@ -503,9 +503,9 @@ def read_dir(dir):
     try:
         for filename in os.listdir(dir):
             filepath = dir + "/" + filename
+            if is_file_ignored(filepath):
+                continue
             if os.path.isfile(filepath):
-                if is_file_ignored(filepath):
-                    continue
                 if filename.lower() == "makefile":
                     check_makefile(filepath)
                 elif re.search('\.(c|h)$', filename):
