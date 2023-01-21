@@ -4,6 +4,10 @@ An Epitech C coding style faults detector.
 
 ## Supported rules of the Epitech C coding style
 
+> More recent coding styles versions are not supported, since Epitech now have an official and public coding style checker since 2022.
+>
+> Consider using the [Epitech/coding-style-checker](https://github.com/Epitech/coding-style-checker) repo instead.
+
 - `--cs-2020`: C Coding Style 2020
   - **Rules checked:** C1, C2, C3, F2, F3, F4, F5, F6, G1, G2, H2, H3, L2, L6, L3, O1, O3, O4, V3 (minimal)
 - `--cs-2021`: C Coding Style 2021
